@@ -12,9 +12,9 @@ import {
 //  ROLES
 // =============================================
 const ROLES = {
-  'admin.estado@dpoyo.cl':    { nombre: 'Admin Estado',    suc: 'Estado',    nivel: 'admin' },
-  'admin.huerfanos@dpoyo.cl': { nombre: 'Admin Huérfanos', suc: 'Huérfanos', nivel: 'admin' },
-  'super@dpoyo.cl':           { nombre: 'Superadmin',      suc: 'Ambas',     nivel: 'super' },
+  'adminestado@dpoyo.cl':    { nombre: 'Admin Estado',    suc: 'Estado',    nivel: 'admin' },
+  'adminhuerfanos@dpoyo.cl': { nombre: 'Admin Huérfanos', suc: 'Huérfanos', nivel: 'admin' },
+  'administrador@dpoyo.cl':  { nombre: 'Superadmin',      suc: 'Ambas',     nivel: 'super' },
 };
 
 const DIAS_PREMIO  = 7;
