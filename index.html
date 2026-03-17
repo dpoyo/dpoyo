@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#FFD307"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="D'Poyo"/>
+  <meta name="description" content="Acumula 7 compras y gana un Súper Cono gratis en D'Poyo"/>
+  <title>D'Poyo Fidelidad</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icons/icon-192.png"/>
+  <link rel="icon" href="icons/icon-192.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<div id="splash">
+  <div class="splash-logo-wrap">
+    <svg viewBox="0 0 267.42 327.05" xmlns="http://www.w3.org/2000/svg" class="splash-svg">
+      <path fill="#FFD307" d="M75.62,88.09c-8.09-17.68-23.47-37.19-25.56-56.97-4.13-39.1,44.53-38.49,63.23-14.04,8.82,11.52,11.35,40.15,31.98,34.69,14.1-3.74,8.89-27.49,29.11-29.28,21.65-1.91,27.99,19.89,29.25,37.46.69,9.58-3.3,19.91,3.25,27.49,9.65,11.19,41.27.23,43.47,17.02,1.79,13.68-26.64,16.67-27.28,32.28-.78,18.85,21.84,18.71,34.68,23.81,12.88,5.12,12.69,20.93.59,26.81-12.28,5.97-40.68,2.08-51.08-7.07-6.81-5.99-8.17-22.45-11.34-31.69-18.14-52.89-68.23-69.62-120.3-60.51Z"/>
+      <path fill="#fff" d="M90.73,100.71c60.31-4.65,97.01,31.24,100.67,90.32,3.65,58.91-13.73,124.28-80.77,134.49-54.34,8.27-94.92-17.45-106.33-71.4-14.44-68.33,5.78-147.2,86.42-153.41ZM89.66,138.58c-44.14,6-41.02,84.06-32.83,115.29,6.18,23.58,20.11,37.88,45.9,35.06,43.95-4.79,41.75-92.71,31.29-122.48-7.22-20.56-22.22-30.88-44.35-27.87Z"/>
+      <path fill="#fff" d="M197.51,262.28c4.12-16.1,6.25-32.56,7.17-49.17.61-.76,9.65,6.34,10.73,7.2,7.27,5.82,32.35,32.01,32.37,40.44,0,3.91-3.8,8.12-7.73,8.23-4.93.14-18.28-4.59-24.73-5.54-5.64-.83-12.08-1.12-17.81-1.15Z"/>
+    </svg>
+  </div>
+  <div class="splash-name">D'POYO</div>
+  <div class="splash-sub">PROGRAMA DE FIDELIDAD</div>
+</div>
+
+<!-- REGISTRO -->
+<div id="screen-register" class="screen hidden">
+  <div class="reg-header">
+    <div class="reg-logo-wrap">
+      <svg viewBox="0 0 267.42 327.05" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#FFD307" d="M75.62,88.09c-8.09-17.68-23.47-37.19-25.56-56.97-4.13-39.1,44.53-38.49,63.23-14.04,8.82,11.52,11.35,40.15,31.98,34.69,14.1-3.74,8.89-27.49,29.11-29.28,21.65-1.91,27.99,19.89,29.25,37.46.69,9.58-3.3,19.91,3.25,27.49,9.65,11.19,41.27.23,43.47,17.02,1.79,13.68-26.64,16.67-27.28,32.28-.78,18.85,21.84,18.71,34.68,23.81,12.88,5.12,12.69,20.93.59,26.81-12.28,5.97-40.68,2.08-51.08-7.07-6.81-5.99-8.17-22.45-11.34-31.69-18.14-52.89-68.23-69.62-120.3-60.51Z"/>
+        <path fill="#fff" d="M90.73,100.71c60.31-4.65,97.01,31.24,100.67,90.32,3.65,58.91-13.73,124.28-80.77,134.49-54.34,8.27-94.92-17.45-106.33-71.4-14.44-68.33,5.78-147.2,86.42-153.41ZM89.66,138.58c-44.14,6-41.02,84.06-32.83,115.29,6.18,23.58,20.11,37.88,45.9,35.06,43.95-4.79,41.75-92.71,31.29-122.48-7.22-20.56-22.22-30.88-44.35-27.87Z"/>
+        <path fill="#fff" d="M197.51,262.28c4.12-16.1,6.25-32.56,7.17-49.17.61-.76,9.65,6.34,10.73,7.2,7.27,5.82,32.35,32.01,32.37,40.44,0,3.91-3.8,8.12-7.73,8.23-4.93.14-18.28-4.59-24.73-5.54-5.64-.83-12.08-1.12-17.81-1.15Z"/>
+      </svg>
+    </div>
+    <h1>CREA TU TARJETA</h1>
+    <p>Acumula 7 compras y gana un<br><strong>Súper Cono gratis 🏆</strong></p>
+  </div>
+  <div class="reg-form">
+    <div class="field">
+      <label>Nombre completo <span class="req">*</span></label>
+      <input type="text" id="reg-nombre" placeholder="Ej: María González" maxlength="50"/>
+      <span class="err" id="err-nombre">Ingresa tu nombre</span>
+    </div>
+    <div class="field">
+      <label>Correo electrónico <span class="req">*</span></label>
+      <input type="email" id="reg-correo" placeholder="tu@correo.com"/>
+      <span class="err" id="err-correo">Ingresa un correo válido</span>
+    </div>
+    <div class="field">
+      <label>WhatsApp <span class="req">*</span></label>
+      <div class="phone-row">
+        <select id="reg-pais">
+          <option value="+56">🇨🇱 +56</option>
+          <option value="+54">🇦🇷 +54</option>
+          <option value="+51">🇵🇪 +51</option>
+          <option value="+58">🇻🇪 +58</option>
+        </select>
+        <input type="tel" id="reg-wsp" placeholder="9 1234 5678" maxlength="12"/>
+      </div>
+      <span class="hint">Para avisarte cuando estés cerca y tengas tu premio disponible</span>
+      <span class="err" id="err-wsp">Ingresa tu número de WhatsApp</span>
+    </div>
+    <div class="field">
+      <label>Fecha de nacimiento <span class="opt">Opcional</span></label>
+      <input type="date" id="reg-bday"/>
+      <span class="hint">Te sorprendemos en tu cumpleaños 🎂</span>
+    </div>
+    <div class="terms-row">
+      <input type="checkbox" id="reg-terms"/>
+      <label for="reg-terms">Acepto recibir notificaciones de D'Poyo. Máximo 3 mensajes por semana.</label>
+    </div>
+    <button class="btn-primary" onclick="doRegister()">CREAR MI TARJETA GRATIS</button>
+    <div class="why-box">
+      <div class="why-title">¿Para qué usamos tus datos?</div>
+      <div class="why-row">📍 Avisarte cuando estés cerca con una oferta</div>
+      <div class="why-row">🏆 Recordarte cuando estés cerca de tu Súper Cono</div>
+      <div class="why-row">🎂 Regalarte algo en tu cumpleaños</div>
+      <div class="why-row">🔒 Nunca compartimos tus datos con terceros</div>
+    </div>
+  </div>
+</div>
+
+<!-- TARJETA -->
+<div id="screen-card" class="screen hidden">
+  <div class="card-topbar">
+    <div class="ctb-logo">
+      <svg viewBox="0 0 267.42 327.05" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#FFD307" d="M75.62,88.09c-8.09-17.68-23.47-37.19-25.56-56.97-4.13-39.1,44.53-38.49,63.23-14.04,8.82,11.52,11.35,40.15,31.98,34.69,14.1-3.74,8.89-27.49,29.11-29.28,21.65-1.91,27.99,19.89,29.25,37.46.69,9.58-3.3,19.91,3.25,27.49,9.65,11.19,41.27.23,43.47,17.02,1.79,13.68-26.64,16.67-27.28,32.28-.78,18.85,21.84,18.71,34.68,23.81,12.88,5.12,12.69,20.93.59,26.81-12.28,5.97-40.68,2.08-51.08-7.07-6.81-5.99-8.17-22.45-11.34-31.69-18.14-52.89-68.23-69.62-120.3-60.51Z"/>
+        <path fill="#fff" d="M90.73,100.71c60.31-4.65,97.01,31.24,100.67,90.32,3.65,58.91-13.73,124.28-80.77,134.49-54.34,8.27-94.92-17.45-106.33-71.4-14.44-68.33,5.78-147.2,86.42-153.41ZM89.66,138.58c-44.14,6-41.02,84.06-32.83,115.29,6.18,23.58,20.11,37.88,45.9,35.06,43.95-4.79,41.75-92.71,31.29-122.48-7.22-20.56-22.22-30.88-44.35-27.87Z"/>
+        <path fill="#fff" d="M197.51,262.28c4.12-16.1,6.25-32.56,7.17-49.17.61-.76,9.65,6.34,10.73,7.2,7.27,5.82,32.35,32.01,32.37,40.44,0,3.91-3.8,8.12-7.73,8.23-4.93.14-18.28-4.59-24.73-5.54-5.64-.83-12.08-1.12-17.81-1.15Z"/>
+      </svg>
+    </div>
+    <div class="ctb-info">
+      <div class="ctb-brand">D'POYO</div>
+      <div class="ctb-sub">Programa de Fidelidad</div>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <div class="geo-notif hidden" id="geoNotif">
+      <div class="geo-dot"></div>
+      <div class="geo-txt" id="geoTxt"></div>
+    </div>
+
+    <div class="user-bar">
+      <div class="user-av" id="userAv">CP</div>
+      <div class="user-info">
+        <div class="user-name" id="userName">Carlos</div>
+        <div class="user-since" id="userSince">Cliente desde Mar 2026</div>
+      </div>
+      <div class="user-conos">
+        <div class="user-conos-n" id="userConos">0</div>
+        <div class="user-conos-l">Conos 🏆</div>
+      </div>
+    </div>
+
+    <div class="stamps-wrap">
+      <div class="stamps-head">
+        <span class="stamps-title">Tus compras</span>
+        <span class="stamps-badge" id="stampsBadge">0 / 7</span>
+      </div>
+      <div class="stamps-grid" id="stampsGrid"></div>
+      <div class="stamps-msg" id="stampsMsg"></div>
+    </div>
+
+    <div class="premio-wrap hidden" id="premioWrap">
+      <div class="premio-top">
+        <span class="premio-title">🏆 SÚPER CONO GRATIS</span>
+        <span class="premio-badge">ACTIVO</span>
+      </div>
+      <div class="premio-body">
+        <div class="premio-h">¡Lo lograste!</div>
+        <div class="premio-sub">Muestra este QR en caja para cobrarlo</div>
+        <div class="premio-qr-box">
+          <div id="canjeQRDiv"></div>
+          <div class="premio-qr-id" id="canjeId"></div>
+        </div>
+        <div class="exp-row">
+          <span class="exp-icon">⏰</span>
+          <span class="exp-txt">Válido hasta el <strong id="expFecha"></strong> · <strong id="expDias"></strong> días</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="qr-wrap">
+      <div class="qr-label">Muestra este código en cada compra</div>
+      <div class="qr-inner">
+        <div id="visitaQRDiv"></div>
+      </div>
+      <div class="qr-id" id="visitaId"></div>
+      <div class="suc-pill">
+        <div class="suc-dot"></div>
+        <span id="sucLabel">Cargando...</span>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-n" id="stCompras">0</div><div class="stat-l">Compras</div></div>
+      <div class="stat"><div class="stat-n" id="stCiclo">0/7</div><div class="stat-l">Ciclo</div></div>
+      <div class="stat"><div class="stat-n" id="stConos">0</div><div class="stat-l">Conos</div></div>
+    </div>
+
+    <button class="btn-notif" id="btnNotif" onclick="requestNotif()">🔔 Activar notificaciones</button>
+
+    <div class="install-bar hidden" id="installBar">
+      <div class="install-txt"><strong>Agrega D'Poyo a tu pantalla</strong><br>Úsala como app y recibe notificaciones</div>
+      <button class="install-btn" onclick="doInstall()">INSTALAR</button>
+    </div>
+
+    <div class="ios-hint hidden" id="iosHint">
+      <strong>📲 iPhone:</strong> Toca <strong>Compartir</strong> → <strong>"En el inicio"</strong> para instalar D'Poyo como app
+    </div>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
