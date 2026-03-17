@@ -42,3 +42,6 @@ self.addEventListener('notificationclick', e => {
     return clients.openWindow('/');
   }));
 });
+
+// VAPID - Push notifications
+const VAPID_KEY = 'BFIvFqfHVKX94eFettJrUvKIoYIcfvX6-m_ZvRgfHV3CUw8Uf9dPGZWnpgr_LoGMjP_b-vOcwClUKzkNYwf4UIw';
