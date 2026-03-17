@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#1e1e1e"/>
+  <title>D'Poyo — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--y:#FFD307;--yd:#D4A900;--b:#1e1e1e;--b2:#252525;--b3:#2e2e2e;--w:#fff;--r:#E02020;--g:#22c55e}
+    body{font-family:'DM Sans',sans-serif;background:#111;color:#fff;min-height:100vh}
+
+    /* LOGIN */
+    #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+    .login-logo{width:90px;height:90px;background:var(--b2);border-radius:22px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:16px;border:2px solid var(--b3)}
+    .login-logo svg{width:72px;height:72px}
+    .login-title{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--y);letter-spacing:2px;margin-bottom:4px}
+    .login-sub{font-size:13px;color:#888;margin-bottom:28px}
+    .login-box{width:100%;max-width:360px;background:var(--b2);border-radius:14px;padding:24px;border:1px solid var(--b3)}
+    .login-field{margin-bottom:14px}
+    .login-field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:5px}
+    .login-field input{width:100%;padding:12px 14px;background:var(--b);border:1px solid var(--b3);border-radius:9px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;transition:border-color .2s}
+    .login-field input:focus{outline:none;border-color:var(--y)}
+    .login-btn{width:100%;padding:14px;background:var(--y);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--b);cursor:pointer;letter-spacing:1px;margin-top:4px}
+    .login-btn:hover{background:var(--yd)}
+    .login-err{font-size:12px;color:var(--r);text-align:center;margin-top:8px;display:none}
+
+    /* ADMIN APP */
+    #adminApp{display:none}
+    .admin-nav{background:var(--b2);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--y);position:sticky;top:0;z-index:50}
+    .an-left{display:flex;align-items:center;gap:10px}
+    .an-logo{width:36px;height:36px;background:var(--b);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .an-logo svg{width:28px;height:28px}
+    .an-name{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--y);letter-spacing:1px}
+    .an-suc{font-size:11px;color:#888}
+    .an-role{font-size:10px;background:#1a1200;border:1px solid var(--y);color:var(--y);padding:2px 8px;border-radius:10px}
+    .logout-btn{background:none;border:none;color:#888;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif}
+    .logout-btn:hover{color:#fff}
+
+    .admin-tabs{display:flex;background:#111;border-bottom:1px solid var(--b3);overflow-x:auto}
+    .atab{flex-shrink:0;padding:11px 14px;font-size:12px;font-weight:500;color:#888;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+    .atab.on{color:var(--y);border-bottom-color:var(--y)}
+    .atab.super-only{display:none}
+
+    .apanel{display:none;max-width:480px;margin:0 auto;padding:16px}
+    .apanel.on{display:block}
+    .section-lbl{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:10px}
+
+    /* SCAN */
+    .scan-box{background:var(--b2);border:2px dashed var(--b3);border-radius:14px;padding:20px 16px;text-align:center;margin-bottom:14px}
+    .scan-ic{width:56px;height:56px;background:var(--y);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+    .scan-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--y);letter-spacing:1px;margin-bottom:3px}
+    .scan-sub{font-size:12px;color:#888;margin-bottom:12px}
+    .scan-inp{width:100%;padding:11px 13px;background:#111;border:1px solid var(--b3);border-radius:8px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;margin-bottom:8px}
+    .scan-inp:focus{outline:none;border-color:var(--y)}
+    .scan-btn{width:100%;padding:13px;background:var(--y);border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--b);cursor:pointer;letter-spacing:1px}
+    .scan-btn:active{transform:scale(.98)}
+
+    /* VIDEO */
+    #videoWrap{border-radius:12px;overflow:hidden;background:#000;aspect-ratio:1;margin-bottom:12px;position:relative;display:none}
+    #scanVideo{width:100%;height:100%;object-fit:cover;display:block}
+    .scan-frame-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+    .scan-frame-box{width:55%;aspect-ratio:1;border:3px solid var(--y);border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.5)}
+    .btn-cam{width:100%;padding:11px;background:var(--b2);border:1px solid var(--b3);border-radius:8px;color:var(--y);font-family:'Bebas Neue',sans-serif;font-size:18px;cursor:pointer;margin-bottom:8px;letter-spacing:1px}
+
+    /* RESULT */
+    .result{border-radius:12px;padding:12px 14px;margin-bottom:14px;display:none}
+    .result.ok{background:#0a2a0a;border:1px solid #1a6a1a}
+    .result.prize{background:#1a0d00;border:2px solid var(--y)}
+    .result.canje{background:#0a1a2a;border:2px solid #378ADD}
+    .result.err{background:#2a1000;border:1px solid #6a3000}
+    .result.expired{background:#2a0a0a;border:1px solid var(--r)}
+    .rt{font-family:'Bebas Neue',sans-serif;font-size:22px;margin-bottom:2px}
+    .rt.ok{color:#6dd06d}.rt.prize{color:var(--y)}.rt.canje{color:#85B7EB}.rt.err{color:#f0a060}.rt.expired{color:var(--r)}
+    .rs{font-size:12px;color:#aaa;line-height:1.4}
+
+    /* CLIENTS */
+    .search-inp{width:100%;padding:10px 13px;background:var(--b2);border:1px solid var(--b3);border-radius:10px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;margin-bottom:12px}
+    .search-inp:focus{outline:none;border-color:var(--y)}
+    .cl-row{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--b2);border-radius:10px;border:1px solid var(--b3);margin-bottom:7px;cursor:pointer;transition:border-color .2s}
+    .cl-row:hover{border-color:var(--y)}
+    .cl-av{width:38px;height:38px;border-radius:50%;background:var(--y);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--b);flex-shrink:0}
+    .cl-info{flex:1}
+    .cl-name{font-weight:500;font-size:14px}
+    .cl-meta{font-size:11px;color:#888}
+    .cl-dots{display:flex;gap:3px}
+    .cd{width:12px;height:12px;border-radius:50%;border:1.5px dashed #333}
+    .cd.on{background:var(--y);border:none}
+    .cd.pr{background:var(--r);border:none}
+    .prize-badge{font-size:10px;background:#1a1200;border:1px solid var(--y);color:var(--y);padding:1px 6px;border-radius:10px;margin-left:5px}
+    .bday-badge{font-size:10px;background:#1a002a;border:1px solid #8a50ff;color:#c090ff;padding:1px 6px;border-radius:10px;margin-left:4px}
+
+    /* STATS */
+    .ast-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+    .ast{background:var(--b2);border:1px solid var(--b3);border-radius:12px;padding:14px}
+    .ast-n{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--y);line-height:1}
+    .ast-l{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px}
+
+    /* CAMPAIGN */
+    .camp-card{background:var(--b2);border-radius:12px;padding:16px;border:1px solid var(--b3);margin-bottom:12px}
+    .camp-title{font-size:14px;font-weight:500;margin-bottom:10px}
+    textarea{width:100%;padding:10px 12px;background:#111;border:1px solid var(--b3);border-radius:8px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;resize:none;height:80px;margin-bottom:6px}
+    textarea:focus{outline:none;border-color:var(--y)}
+    .char-count{font-size:11px;color:#888;margin-bottom:8px}
+    .camp-btn{width:100%;padding:11px;background:var(--b3);border:none;border-radius:8px;color:var(--y);font-family:'Bebas Neue',sans-serif;font-size:18px;cursor:pointer;letter-spacing:1px}
+    .camp-btn:hover{background:#3a3000}
+
+    /* CONFIG BDAY */
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .toggle-lbl{font-size:13px;font-weight:500}
+    .toggle{position:relative;width:44px;height:24px}
+    .toggle input{opacity:0;width:0;height:0;position:absolute}
+    .toggle-track{position:absolute;inset:0;border-radius:12px;background:var(--b3);cursor:pointer;transition:background .25s}
+    .toggle input:checked+.toggle-track{background:var(--y)}
+    .toggle-track::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .25s}
+    .toggle input:checked+.toggle-track::after{transform:translateX(20px)}
+    .days-row{display:flex;gap:6px;margin-bottom:10px}
+    .day-opt{flex:1;padding:8px;background:#111;border:1px solid var(--b3);border-radius:8px;text-align:center;font-size:12px;cursor:pointer;color:#888;transition:all .2s}
+    .day-opt.on{border-color:var(--y);color:var(--y);background:#1a1200}
+    .save-config-btn{width:100%;padding:11px;background:var(--y);border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--b);cursor:pointer;letter-spacing:1px}
+
+    /* PROX MSGS */
+    .prox-msg{background:var(--b3);border-radius:8px;padding:9px 11px;margin-bottom:6px;font-size:12px;color:#ccc;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+    .edit-btn{background:none;border:none;color:var(--y);font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+
+    .empty-state{text-align:center;padding:30px;color:#888;font-size:13px}
+
+    /* MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;overflow-y:auto;padding:20px}
+    .modal-overlay.open{display:flex;align-items:flex-start;justify-content:center;padding-top:40px}
+    .modal-box{background:var(--b2);border-radius:14px;padding:20px;width:100%;max-width:420px;border:1px solid var(--b3)}
+    .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .modal-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--y)}
+    .modal-close{background:var(--b3);border:none;color:#aaa;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer}
+    .hist-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--b3);font-size:12px;color:#ccc}
+    .hist-badge{background:#0a2a0a;color:#6dd06d;padding:1px 7px;border-radius:10px;font-size:10px}
+    .hist-badge.prize{background:#1a1200;color:var(--y)}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-logo">
+    <svg viewBox="0 0 267.42 327.05" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#FFD307" d="M75.62,88.09c-8.09-17.68-23.47-37.19-25.56-56.97-4.13-39.1,44.53-38.49,63.23-14.04,8.82,11.52,11.35,40.15,31.98,34.69,14.1-3.74,8.89-27.49,29.11-29.28,21.65-1.91,27.99,19.89,29.25,37.46.69,9.58-3.3,19.91,3.25,27.49,9.65,11.19,41.27.23,43.47,17.02,1.79,13.68-26.64,16.67-27.28,32.28-.78,18.85,21.84,18.71,34.68,23.81,12.88,5.12,12.69,20.93.59,26.81-12.28,5.97-40.68,2.08-51.08-7.07-6.81-5.99-8.17-22.45-11.34-31.69-18.14-52.89-68.23-69.62-120.3-60.51Z"/>
+      <path fill="#fff" d="M90.73,100.71c60.31-4.65,97.01,31.24,100.67,90.32,3.65,58.91-13.73,124.28-80.77,134.49-54.34,8.27-94.92-17.45-106.33-71.4-14.44-68.33,5.78-147.2,86.42-153.41ZM89.66,138.58c-44.14,6-41.02,84.06-32.83,115.29,6.18,23.58,20.11,37.88,45.9,35.06,43.95-4.79,41.75-92.71,31.29-122.48-7.22-20.56-22.22-30.88-44.35-27.87Z"/>
+      <path fill="#fff" d="M197.51,262.28c4.12-16.1,6.25-32.56,7.17-49.17.61-.76,9.65,6.34,10.73,7.2,7.27,5.82,32.35,32.01,32.37,40.44,0,3.91-3.8,8.12-7.73,8.23-4.93.14-18.28-4.59-24.73-5.54-5.64-.83-12.08-1.12-17.81-1.15Z"/>
+    </svg>
+  </div>
+  <div class="login-title">D'POYO ADMIN</div>
+  <div class="login-sub">Ingresa con tu cuenta de administrador</div>
+  <div class="login-box">
+    <div class="login-field">
+      <label>Correo</label>
+      <input type="email" id="loginEmail" placeholder="admin.estado@dpoyo.cl"/>
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()">INGRESAR</button>
+    <div class="login-err" id="loginErr">Correo o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="adminApp">
+  <div class="admin-nav">
+    <div class="an-left">
+      <div class="an-logo">
+        <svg viewBox="0 0 267.42 327.05" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#FFD307" d="M75.62,88.09c-8.09-17.68-23.47-37.19-25.56-56.97-4.13-39.1,44.53-38.49,63.23-14.04,8.82,11.52,11.35,40.15,31.98,34.69,14.1-3.74,8.89-27.49,29.11-29.28,21.65-1.91,27.99,19.89,29.25,37.46.69,9.58-3.3,19.91,3.25,27.49,9.65,11.19,41.27.23,43.47,17.02,1.79,13.68-26.64,16.67-27.28,32.28-.78,18.85,21.84,18.71,34.68,23.81,12.88,5.12,12.69,20.93.59,26.81-12.28,5.97-40.68,2.08-51.08-7.07-6.81-5.99-8.17-22.45-11.34-31.69-18.14-52.89-68.23-69.62-120.3-60.51Z"/>
+          <path fill="#fff" d="M90.73,100.71c60.31-4.65,97.01,31.24,100.67,90.32,3.65,58.91-13.73,124.28-80.77,134.49-54.34,8.27-94.92-17.45-106.33-71.4-14.44-68.33,5.78-147.2,86.42-153.41ZM89.66,138.58c-44.14,6-41.02,84.06-32.83,115.29,6.18,23.58,20.11,37.88,45.9,35.06,43.95-4.79,41.75-92.71,31.29-122.48-7.22-20.56-22.22-30.88-44.35-27.87Z"/>
+          <path fill="#fff" d="M197.51,262.28c4.12-16.1,6.25-32.56,7.17-49.17.61-.76,9.65,6.34,10.73,7.2,7.27,5.82,32.35,32.01,32.37,40.44,0,3.91-3.8,8.12-7.73,8.23-4.93.14-18.28-4.59-24.73-5.54-5.64-.83-12.08-1.12-17.81-1.15Z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="an-name">D'POYO</div>
+        <div class="an-suc" id="navSuc">—</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="an-role" id="navRole">Admin</span>
+      <button class="logout-btn" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="admin-tabs">
+    <div class="atab on" onclick="swTab('scan',this)">Escanear</div>
+    <div class="atab" onclick="swTab('clientes',this)">Clientes</div>
+    <div class="atab" onclick="swTab('stats',this)">Resumen</div>
+    <div class="atab super-only" id="tabCampana" onclick="swTab('campana',this)">Campaña</div>
+    <div class="atab super-only" id="tabConfig" onclick="swTab('config',this)">Configuración</div>
+  </div>
+
+  <!-- SCAN -->
+  <div class="apanel on" id="ap-scan">
+    <div style="height:4px"></div>
+    <div id="videoWrap">
+      <video id="scanVideo" playsinline muted></video>
+      <div class="scan-frame-overlay"><div class="scan-frame-box"></div></div>
+    </div>
+    <button class="btn-cam" id="btnCam" onclick="toggleCamera()">📷 ESCANEAR CON CÁMARA</button>
+    <div class="scan-box">
+      <div class="scan-ic">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1e1e1e" stroke-width="2.2" stroke-linecap="round">
+          <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/>
+          <rect x="7" y="7" width="4" height="4" rx="1"/><rect x="13" y="7" width="4" height="4" rx="1"/>
+          <rect x="7" y="13" width="4" height="4" rx="1"/><path d="M13 13h4v4"/>
+        </svg>
+      </div>
+      <div class="scan-title">Ingreso manual</div>
+      <div class="scan-sub">O escribe el ID del QR del cliente</div>
+      <input class="scan-inp" id="scanInp" placeholder="DPOYO-XXXX-XXX o CANJE-XXXX-XXX o BDAY-XXXX-XXX" onkeydown="if(event.key==='Enter')doScan()"/>
+      <button class="scan-btn" onclick="doScan()">REGISTRAR</button>
+    </div>
+    <div class="result" id="scanResult">
+      <div class="rt" id="resTitle"></div>
+      <div class="rs" id="resSub"></div>
+    </div>
+  </div>
+
+  <!-- CLIENTES -->
+  <div class="apanel" id="ap-clientes">
+    <input class="search-inp" placeholder="Buscar por nombre o ID..." oninput="renderClients(this.value)"/>
+    <div id="clientList"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="apanel" id="ap-stats">
+    <div class="ast-grid">
+      <div class="ast"><div class="ast-n" id="stClientes">—</div><div class="ast-l">Clientes</div></div>
+      <div class="ast"><div class="ast-n" id="stVisitas">—</div><div class="ast-l">Compras</div></div>
+      <div class="ast"><div class="ast-n" id="stConos">—</div><div class="ast-l">Conos canjeados</div></div>
+      <div class="ast"><div class="ast-n" id="stHoy">—</div><div class="ast-l">Compras hoy</div></div>
+    </div>
+    <div class="section-lbl">Próximos en ganar el premio</div>
+    <div id="nearList"></div>
+  </div>
+
+  <!-- CAMPAÑA (solo superadmin) -->
+  <div class="apanel" id="ap-campana">
+    <div class="camp-card">
+      <div class="camp-title">📣 Enviar mensaje a todos los clientes</div>
+      <textarea id="campMsg" placeholder="Ej: 🎉 ¡Felices Fiestas Patrias! Hoy el segundo combo tiene 2x1. Solo hoy en nuestras dos sucursales." oninput="document.getElementById('campCount').textContent=this.value.length+' / 160'"></textarea>
+      <div class="char-count" id="campCount">0 / 160</div>
+      <button class="camp-btn" onclick="sendCampaign()">ENVIAR A TODOS →</button>
+    </div>
+    <div class="camp-card">
+      <div class="camp-title">🎂 Mensaje de cumpleaños (automático)</div>
+      <textarea id="bdayMsgCamp">🎂 ¡Feliz cumpleaños! En D'Poyo lo celebramos contigo — hoy tienes una sorpresa esperándote. Ven a verla 🏆</textarea>
+      <button class="camp-btn" onclick="saveBdayMsg()">GUARDAR MENSAJE</button>
+    </div>
+    <div class="camp-card">
+      <div class="camp-title">🔔 Mensajes de proximidad</div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px">Se envían al azar · máximo cada 48h · solo cuando el cliente está a 200m</div>
+      <div id="proxList"></div>
+    </div>
+  </div>
+
+  <!-- CONFIG (solo superadmin) -->
+  <div class="apanel" id="ap-config">
+    <div class="camp-card">
+      <div class="camp-title">🎂 Activar / Desactivar cumpleaños</div>
+      <div class="toggle-row">
+        <span class="toggle-lbl" id="bdayStatusLbl">Activo</span>
+        <label class="toggle">
+          <input type="checkbox" id="bdayToggle" checked onchange="toggleBday()"/>
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+      <div id="bdayConfigFields">
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Nombre del premio</div>
+          <input class="scan-inp" id="bdayPrizeName" value="Súper Cono de cumpleaños" style="margin-bottom:0"/>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Días para cobrar</div>
+          <div class="days-row" id="bdayDaysRow">
+            <div class="day-opt" onclick="selBdayDays(1,this)">1 día</div>
+            <div class="day-opt on" onclick="selBdayDays(2,this)">2 días</div>
+            <div class="day-opt" onclick="selBdayDays(3,this)">3 días</div>
+            <div class="day-opt" onclick="selBdayDays(7,this)">7 días</div>
+          </div>
+        </div>
+        <button class="save-config-btn" onclick="saveBdayConfig()">GUARDAR CONFIGURACIÓN</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="modal-overlay" id="clientModal" onclick="if(event.target.id==='clientModal')closeModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">Cliente</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script type="module" src="admin.js"></script>
+</body>
+</html>

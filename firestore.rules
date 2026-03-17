@@ -1,0 +1,31 @@
+// firestore.rules
+// Copia esto en Firebase Console → Firestore → Reglas
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Clientes: el propio cliente puede leer su doc, solo admins autenticados pueden escribir
+    match /clientes/{clienteId} {
+      allow read: if request.auth != null || resource.data.id == clienteId;
+      allow write: if request.auth != null;
+      allow create: if true; // Para que el cliente pueda registrarse
+    }
+
+    // Visitas: solo admins autenticados
+    match /visitas/{visitaId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Canjes: solo admins autenticados
+    match /canjes/{canjeId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Config: solo superadmin (super@dpoyo.cl)
+    match /config/{configId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.email == 'super@dpoyo.cl';
+    }
+  }
+}
