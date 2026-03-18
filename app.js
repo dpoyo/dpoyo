@@ -205,10 +205,10 @@ function renderPremios() {
     const isCono=premio.tipo==='cono';
     const color=isCono?'#FFD307':(premio.tipo==='40%'?'#2196F3':'#4CAF50');
     const textColor=isCono?'#1e1e1e':'#fff';
-    const title=isCono?'🏆 SÚPER CONO GRATIS':`🎫 DESCUENTO ${premio.tipo}`;
-    const h=isCono?'¡Lo lograste!':`¡${premio.tipo} en tu próxima compra!`;
-    const sub=isCono?'Muestra este QR en caja para cobrarlo':'Muestra este QR al cajero al pagar';
-    const qrId='pqr_'+premio.id.replace(/-/g,'_');
+    const title=isCono?'🏆 SÚPER CONO GRATIS':`🎫 ${premio.tipo} DE DESCUENTO`;
+    const h=isCono?'¡Lo lograste!':`¡${premio.tipo} de descuento en tu próxima compra!`;
+    const sub=isCono?'Muestra este QR en caja para cobrarlo':'Muestra este QR al cajero al momento de pagar';
+    const qrId='pqr_'+premio.id.replace(/[^a-zA-Z0-9]/g,'_');
 
     html+=`<div style="background:#252525;border-radius:14px;overflow:hidden;border:2px solid ${color};margin-bottom:12px">
       <div style="background:${color};padding:11px 14px;display:flex;align-items:center;justify-content:space-between">
@@ -219,7 +219,7 @@ function renderPremios() {
         <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:${color};margin-bottom:3px">${h}</div>
         <div style="font-size:12px;color:#aaa;margin-bottom:12px">${sub}</div>
         <div style="background:#fff;border-radius:9px;padding:11px;display:inline-flex;flex-direction:column;align-items:center;gap:5px;margin-bottom:10px">
-          <div id="${qrId}"></div>
+          <div id="${qrId}" style="min-width:120px;min-height:120px"></div>
           <div style="font-family:monospace;font-size:10px;color:#555">${premio.id}</div>
         </div>
         ${dias>=0
@@ -231,30 +231,41 @@ function renderPremios() {
             </div>`}
       </div>
     </div>`;
-
-    waitForQRLib(()=>{
-      const el=document.getElementById(qrId);
-      if (el&&!el.hasChildNodes()&&!premiosQRDone[qrId]) {
-        new QRCode(el,{text:premio.id,width:120,height:120,colorDark:'#1e1e1e',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
-        premiosQRDone[qrId]=true;
-      }
-    });
+    // Guardar info del QR para generarlo DESPUÉS del innerHTML
+    cont._pendingQR = { id: qrId, text: premio.id };
   }
 
   if (hist.length>0) {
     html+=`<div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#666;margin:12px 0 8px">Ya utilizados</div>`;
     hist.forEach(p=>{
+      if (p.reemplazado) return; // no mostrar los reemplazados
       html+=`<div style="background:#252525;border-radius:12px;border:1px solid #2a2a2a;padding:12px 14px;margin-bottom:8px;opacity:.6;display:flex;align-items:center;gap:10px">
         <div style="font-size:20px">${p.tipo==='cono'?'🏆':'🎫'}</div>
         <div>
-          <div style="font-size:13px;font-weight:500;color:#888">${p.tipo==='cono'?'Súper Cono Gratis':p.tipo+' descuento'}</div>
+          <div style="font-size:13px;font-weight:500;color:#888">${p.tipo==='cono'?'Súper Cono Gratis':p.tipo+' de descuento'}</div>
           <div style="font-size:11px;color:#555">Canjeado · ${p.fecha||''}</div>
         </div>
         <div style="margin-left:auto;background:#1a2a1a;border:1px solid #2a5a2a;color:#6dd06d;font-size:10px;padding:2px 8px;border-radius:10px">✓ Usado</div>
       </div>`;
     });
   }
+
+  // Primero escribir el HTML, LUEGO generar el QR
   cont.innerHTML=html;
+
+  // Ahora el elemento existe en el DOM — generar QR
+  if (cont._pendingQR) {
+    const {id: qrId, text: qrText} = cont._pendingQR;
+    cont._pendingQR = null;
+    waitForQRLib(()=>{
+      const el=document.getElementById(qrId);
+      if (!el) return;
+      el.innerHTML=''; // limpiar por si acaso
+      try {
+        new QRCode(el,{text:qrText,width:120,height:120,colorDark:'#1e1e1e',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
+      } catch(e){ console.warn('QR error',e); }
+    });
+  }
 }
 
 function updatePremiosBadge() {
