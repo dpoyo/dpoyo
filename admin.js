@@ -180,34 +180,73 @@ async function processVisita(clientId) {
     cl = { id: snap.id, ...snap.data() };
   } catch(e) { showResult('err', 'Error de conexión', 'Revisa tu internet e intenta de nuevo.'); return; }
 
-  const nuevasVisitas  = (cl.visitas || 0) + 1;
-  const nuevoCiclo     = (cl.ciclo_actual || 0) + 1;
-  const updates        = { visitas: nuevasVisitas, suc_frecuente: currentAdmin.suc };
+  const nuevasVisitas = (cl.visitas || 0) + 1;
+  const nuevoCiclo    = (cl.ciclo_actual || 0) + 1;
+  const descUsados    = cl.descuentos_usados || 0;
+  const updates       = { visitas: nuevasVisitas, suc_frecuente: currentAdmin.suc };
+  const vence         = new Date(); vence.setDate(vence.getDate() + DIAS_PREMIO);
+  const initials      = cl.nombre.slice(0,3).toUpperCase();
 
-  // Registrar visita en historial
   await addDoc(collection(db, 'visitas'), {
     cliente_id: clientId, nombre: cl.nombre,
     sucursal: currentAdmin.suc, admin: currentAdmin.email,
     fecha: serverTimestamp(),
   });
 
-  if (nuevoCiclo >= COMPRAS_META) {
-    // Generar premio
-    const canjeId  = `CANJE-${Math.floor(1000+Math.random()*9000)}-${cl.nombre.slice(0,3).toUpperCase()}`;
-    const vence    = new Date(); vence.setDate(vence.getDate() + DIAS_PREMIO);
-    updates.ciclo_actual   = 0;
-    updates.conos_ganados  = (cl.conos_ganados || 0) + 1;
-    updates.premio_activo  = { id: canjeId, vence: vence.toISOString(), usado: false, tipo: 'premio' };
-    await updateDoc(doc(db, 'clientes', clientId), updates);
-    showResult('prize', `🏆 ¡SÚPER CONO GENERADO! — ${cl.nombre}`,
-      `Completó 7 compras. QR de canje: ${canjeId} · Válido 7 días.`);
+  let premioPara = null, resultType = 'ok', resultTitle = '', resultSub = '';
+
+  if (nuevoCiclo === 3) {
+    const id = `DESC-${Math.floor(1000+Math.random()*9000)}-20P`;
+    premioPara  = { id, vence: vence.toISOString(), usado: false, tipo: '20%' };
+    updates.ciclo_actual = nuevoCiclo;
+    resultType  = 'prize';
+    resultTitle = `🎫 20% DE DESCUENTO — ${cl.nombre}`;
+    resultSub   = `Compra 3 completada · QR generado: ${id} · Válido 7 días`;
+
+  } else if (nuevoCiclo === 5) {
+    const tipo   = descUsados === 0 ? '40%' : '20%';
+    const sufijo = descUsados === 0 ? '40P' : '20P';
+    const id     = `DESC-${Math.floor(1000+Math.random()*9000)}-${sufijo}`;
+    if (descUsados === 0 && cl.premio_activo && cl.premio_activo.tipo === '20%') {
+      const hist = cl.premios_historial || [];
+      hist.push({ tipo: '20%', id: cl.premio_activo.id, fecha: 'Reemplazado por 40%', reemplazado: true });
+      updates.premios_historial = hist;
+    }
+    premioPara  = { id, vence: vence.toISOString(), usado: false, tipo };
+    updates.ciclo_actual = nuevoCiclo;
+    resultType  = 'prize';
+    resultTitle = `🎫 ${tipo} DE DESCUENTO — ${cl.nombre}`;
+    resultSub   = `Compra 5 completada · QR generado: ${id} · Válido 7 días`;
+
+  } else if (nuevoCiclo >= 7) {
+    updates.ciclo_actual = 0;
+    if (descUsados === 0) {
+      const id    = `CANJE-${Math.floor(1000+Math.random()*9000)}-${initials}`;
+      premioPara  = { id, vence: vence.toISOString(), usado: false, tipo: 'cono' };
+      updates.conos_ganados = (cl.conos_ganados || 0) + 1;
+      resultType  = 'prize';
+      resultTitle = `🏆 ¡SÚPER CONO GRATIS! — ${cl.nombre}`;
+      resultSub   = `No usó ningún descuento · QR: ${id} · Válido 7 días`;
+    } else {
+      const id    = `DESC-${Math.floor(1000+Math.random()*9000)}-20F`;
+      premioPara  = { id, vence: vence.toISOString(), usado: false, tipo: '20%' };
+      resultType  = 'prize';
+      resultTitle = `🎫 20% DESCUENTO FINAL — ${cl.nombre}`;
+      resultSub   = `Completó 7 compras con descuentos usados · QR: ${id} · Válido 7 días`;
+    }
   } else {
     updates.ciclo_actual = nuevoCiclo;
-    await updateDoc(doc(db, 'clientes', clientId), updates);
-    const left = COMPRAS_META - nuevoCiclo;
-    showResult('ok', `✓ Compra registrada — ${cl.nombre}`,
-      `Compra #${nuevasVisitas} · ${left} compra${left===1?'':'s'} para el Súper Cono.`);
+    let prox = '';
+    if (nuevoCiclo < 3)      prox = `Próximo premio en compra 3 (${3-nuevoCiclo} más)`;
+    else if (nuevoCiclo < 5) prox = `Próximo premio en compra 5 (${5-nuevoCiclo} más)`;
+    else if (nuevoCiclo < 7) prox = `Premio final en compra 7 (${7-nuevoCiclo} más)`;
+    resultTitle = `✓ Compra registrada — ${cl.nombre}`;
+    resultSub   = `Compra #${nuevasVisitas} · ${prox}`;
   }
+
+  if (premioPara) updates.premio_activo = premioPara;
+  await updateDoc(doc(db, 'clientes', clientId), updates);
+  showResult(resultType, resultTitle, resultSub);
   loadClients();
   renderStats();
 }
