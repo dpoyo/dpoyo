@@ -163,9 +163,14 @@ window.doScan = async function() {
     await processCanje(val, 'bday');
     return;
   }
-  // CANJE PREMIO
+  // CANJE SÚPER CONO
   if (val.startsWith('CANJE-')) {
-    await processCanje(val, 'premio');
+    await processCanje(val, 'canje');
+    return;
+  }
+  // CANJE DESCUENTO (20% o 40%)
+  if (val.startsWith('DESC-')) {
+    await processCanje(val, 'descuento');
     return;
   }
   // VISITA NORMAL
@@ -291,11 +296,18 @@ async function processCanje(canjeId, tipo) {
     fecha: serverTimestamp(),
   });
 
-  const esBday = tipo === 'bday';
-  showResult('canje',
-    esBday ? `🎂 CANJE CUMPLEAÑOS — ${cl.nombre}` : `🏆 SÚPER CONO CANJEADO — ${cl.nombre}`,
-    `Premio entregado ✓ · Válido por ${dias} día${dias===1?'':'s'} más. Nuevo ciclo iniciado.`
-  );
+  // Mensaje según tipo de premio
+  let resTitle = '', resSub = `Premio entregado ✓ · Válido por ${dias} día${dias===1?'':'s'} más.`;
+  if (tipo === 'bday') {
+    resTitle = `🎂 CANJE CUMPLEAÑOS — ${cl.nombre}`;
+  } else if (premio.tipo === 'cono') {
+    resTitle = `🏆 SÚPER CONO CANJEADO — ${cl.nombre}`;
+    resSub += ' Nuevo ciclo iniciado.';
+  } else {
+    resTitle = `🎫 ${premio.tipo} DESCUENTO CANJEADO — ${cl.nombre}`;
+    resSub = `Descuento del ${premio.tipo} entregado ✓ · El próximo premio se calculará en la siguiente compra.`;
+  }
+  showResult('canje', resTitle, resSub);
   loadClients();
 }
 
