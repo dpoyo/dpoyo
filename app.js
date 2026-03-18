@@ -56,15 +56,36 @@ function startRealtimeSync() {
     onSnapshot(doc(db, 'clientes', currentUser.id), (snap) => {
       if (!snap.exists()) return;
       const data = snap.data();
-      const premioAntes = currentUser.premio_activo;
+      const premioAntes = currentUser?.premio_activo;
+      // Merge keeping all fields
       currentUser = { ...currentUser, ...data };
-      saveLocalUser(currentUser);
-      renderCard();
-      // Si acaba de llegar un premio nuevo, cambiar a pestaña Mis Premios
-      if (data.premio_activo && !data.premio_activo.usado &&
-          (!premioAntes || premioAntes.id !== data.premio_activo.id)) {
+      saveLocalUser(currentUser); // guardar ANTES de renderizar
+      renderStamps(currentUser.ciclo_actual || 0);
+      updatePremiosBadge();
+      // Actualizar stats
+      const cycle = currentUser.ciclo_actual || 0;
+      document.getElementById('stampsBadge').textContent = cycle + ' / 7';
+      document.getElementById('stCompras').textContent = currentUser.visitas || 0;
+      document.getElementById('stCiclo').textContent   = cycle + '/7';
+      document.getElementById('stConos').textContent   = currentUser.conos_ganados || 0;
+      document.getElementById('userConos').textContent = currentUser.conos_ganados || 0;
+      // Si llega un premio nuevo
+      const premioNuevo = data.premio_activo && !data.premio_activo.usado &&
+        (!premioAntes || premioAntes.id !== data.premio_activo.id);
+      if (premioNuevo) {
         premiosQRDone = {};
-        switchTab('premios');
+        // Si ya está en pestaña premios, re-renderizar
+        const panelPremios = document.getElementById('cpanel-premios');
+        if (panelPremios && panelPremios.classList.contains('on')) {
+          renderPremios();
+        } else {
+          // Cambiar a pestaña premios y renderizar
+          document.querySelectorAll('.card-tab-btn').forEach(b=>b.classList.remove('on'));
+          document.querySelectorAll('.card-tab-panel').forEach(p=>p.classList.remove('on'));
+          document.getElementById('ctab-premios').classList.add('on');
+          document.getElementById('cpanel-premios').classList.add('on');
+          renderPremios();
+        }
         showPremioAlert(data.premio_activo);
       }
     });
@@ -127,7 +148,10 @@ window.switchTab = function(tab) {
   document.querySelectorAll('.card-tab-panel').forEach(p=>p.classList.remove('on'));
   document.getElementById('ctab-'+tab).classList.add('on');
   document.getElementById('cpanel-'+tab).classList.add('on');
-  if (tab==='premios') renderPremios();
+  if (tab==='premios') {
+    premiosQRDone = {}; // reset QR cache so it regenerates
+    renderPremios();
+  }
 };
 
 // ---- RENDER CARD ----
@@ -185,6 +209,9 @@ function renderQRVisita() {
 
 // ---- PREMIOS ----
 function renderPremios() {
+  // Re-sync from localStorage to catch any Firestore updates
+  const saved = loadLocalUser();
+  if (saved && saved.id === currentUser?.id) currentUser = saved;
   const u=currentUser, cont=document.getElementById('premiosContent');
   if (!cont) return;
   const premio=u.premio_activo, hist=u.premios_historial||[];
