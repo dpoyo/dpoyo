@@ -271,10 +271,22 @@ async function processCanje(canjeId, tipo) {
     showResult('expired', '✕ PREMIO VENCIDO', `Venció hace ${Math.abs(dias)} día${Math.abs(dias)===1?'':'s'}. Queda a tu criterio si igual lo entregas.`); return;
   }
 
-  // Marcar como usado
-  await updateDoc(clRef, { 'premio_activo.usado': true });
+  // Marcar como usado y actualizar historial
+  const hist = cl.premios_historial || [];
+  const fechaHoy = new Date().toLocaleDateString('es-CL',{day:'numeric',month:'short',year:'numeric'});
+  hist.push({ tipo: premio.tipo, id: canjeId, fecha: fechaHoy, usado: true });
+
+  const updateData = {
+    'premio_activo.usado': true,
+    premios_historial: hist,
+  };
+  // Si es un descuento (no cono), incrementar contador de descuentos usados
+  if (premio.tipo !== 'cono') {
+    updateData.descuentos_usados = (cl.descuentos_usados || 0) + 1;
+  }
+  await updateDoc(clRef, updateData);
   await addDoc(collection(db, 'canjes'), {
-    cliente_id: cl.id, nombre: cl.nombre, tipo,
+    cliente_id: cl.id, nombre: cl.nombre, tipo: premio.tipo,
     sucursal: currentAdmin.suc, admin: currentAdmin.email,
     fecha: serverTimestamp(),
   });
