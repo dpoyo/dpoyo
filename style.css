@@ -124,3 +124,24 @@ html,body{font-family:'DM Sans',sans-serif;background:var(--b);color:#fff;min-he
 .install-btn{padding:7px 13px;background:var(--y);border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--b);cursor:pointer;white-space:nowrap}
 .ios-hint{background:var(--b2);border:1px solid var(--b3);border-radius:10px;padding:12px 14px;font-size:12px;color:#aaa;line-height:1.6}
 .ios-hint strong{color:#fff}
+
+/* =============================================
+   TABS Mi QR / Mis Premios
+   ============================================= */
+.card-tabs-wrap{display:flex;background:var(--b2);border-radius:12px;padding:4px;gap:4px;margin-bottom:14px;border:1px solid var(--b3)}
+.card-tab-btn{flex:1;padding:10px 8px;border-radius:9px;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#888;cursor:pointer;transition:all .2s}
+.card-tab-btn.on{background:var(--y);color:var(--b)}
+
+.card-tab-panel{display:none}
+.card-tab-panel.on{display:block}
+
+/* QR Panel */
+.qr-panel{background:var(--b2);border-radius:14px;padding:16px;border:1px solid var(--b3);text-align:center;margin-bottom:14px}
+.qr-panel-title{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--y);letter-spacing:1px;margin-bottom:3px}
+.qr-panel-sub{font-size:12px;color:#888;margin-bottom:14px;line-height:1.5}
+.qr-inner-box{background:#fff;border-radius:10px;padding:12px;display:inline-block;margin-bottom:8px}
+.qr-id{font-family:monospace;font-size:12px;color:var(--y);display:block;margin-bottom:8px}
+.suc-pill{display:inline-flex;align-items:center;gap:5px;background:#1a1200;border:1px solid #3a3000;color:#ccc;font-size:11px;padding:4px 10px;border-radius:20px;margin-bottom:10px}
+.suc-dot{width:7px;height:7px;background:var(--g);border-radius:50%;animation:blink 2s infinite}
+.qr-warning{background:#1a0a00;border:1px solid #4a2000;border-radius:8px;padding:9px 11px;font-size:11px;color:#f0a060;line-height:1.5;text-align:left}
+.qr-warning strong{color:var(--y)}
