@@ -18,6 +18,7 @@
 </head>
 <body>
 
+<!-- SPLASH -->
 <div id="splash">
   <div class="splash-logo-wrap">
     <svg viewBox="0 0 267.42 327.05" xmlns="http://www.w3.org/2000/svg" class="splash-svg">
@@ -41,7 +42,7 @@
       </svg>
     </div>
     <h1>CREA TU TARJETA</h1>
-    <p>Acumula 7 compras y gana un<br><strong>Súper Cono gratis 🏆</strong></p>
+    <p>Acumula 7 compras y gana premios<br><strong>¡Desde la compra 3! 🎫</strong></p>
   </div>
   <div class="reg-form">
     <div class="field">
@@ -65,7 +66,7 @@
         </select>
         <input type="tel" id="reg-wsp" placeholder="9 1234 5678" maxlength="12"/>
       </div>
-      <span class="hint">Para avisarte cuando estés cerca y tengas tu premio disponible</span>
+      <span class="hint">Para avisarte cuando estés cerca y tengas premios disponibles</span>
       <span class="err" id="err-wsp">Ingresa tu número de WhatsApp</span>
     </div>
     <div class="field">
@@ -81,7 +82,7 @@
     <div class="why-box">
       <div class="why-title">¿Para qué usamos tus datos?</div>
       <div class="why-row">📍 Avisarte cuando estés cerca con una oferta</div>
-      <div class="why-row">🏆 Recordarte cuando estés cerca de tu Súper Cono</div>
+      <div class="why-row">🎫 Recordarte cuándo tienes premios disponibles</div>
       <div class="why-row">🎂 Regalarte algo en tu cumpleaños</div>
       <div class="why-row">🔒 Nunca compartimos tus datos con terceros</div>
     </div>
@@ -98,21 +99,23 @@
         <path fill="#fff" d="M197.51,262.28c4.12-16.1,6.25-32.56,7.17-49.17.61-.76,9.65,6.34,10.73,7.2,7.27,5.82,32.35,32.01,32.37,40.44,0,3.91-3.8,8.12-7.73,8.23-4.93.14-18.28-4.59-24.73-5.54-5.64-.83-12.08-1.12-17.81-1.15Z"/>
       </svg>
     </div>
-    <div class="ctb-info">
+    <div>
       <div class="ctb-brand">D'POYO</div>
       <div class="ctb-sub">Programa de Fidelidad</div>
     </div>
   </div>
 
   <div class="card-body">
+    <!-- GEO -->
     <div class="geo-notif hidden" id="geoNotif">
       <div class="geo-dot"></div>
       <div class="geo-txt" id="geoTxt"></div>
     </div>
 
+    <!-- USER -->
     <div class="user-bar">
       <div class="user-av" id="userAv">CP</div>
-      <div class="user-info">
+      <div>
         <div class="user-name" id="userName">Carlos</div>
         <div class="user-since" id="userSince">Cliente desde Mar 2026</div>
       </div>
@@ -122,6 +125,7 @@
       </div>
     </div>
 
+    <!-- STAMPS -->
     <div class="stamps-wrap">
       <div class="stamps-head">
         <span class="stamps-title">Tus compras</span>
@@ -129,39 +133,57 @@
       </div>
       <div class="stamps-grid" id="stampsGrid"></div>
       <div class="stamps-msg" id="stampsMsg"></div>
-    </div>
-
-    <div class="premio-wrap hidden" id="premioWrap">
-      <div class="premio-top">
-        <span class="premio-title">🏆 SÚPER CONO GRATIS</span>
-        <span class="premio-badge">ACTIVO</span>
-      </div>
-      <div class="premio-body">
-        <div class="premio-h">¡Lo lograste!</div>
-        <div class="premio-sub">Muestra este QR en caja para cobrarlo</div>
-        <div class="premio-qr-box">
-          <div id="canjeQRDiv"></div>
-          <div class="premio-qr-id" id="canjeId"></div>
+      <!-- Leyenda milestones -->
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#888">
+          <div style="width:8px;height:8px;border-radius:50%;background:#4CAF50"></div>20% dcto (compra 3)
         </div>
-        <div class="exp-row">
-          <span class="exp-icon">⏰</span>
-          <span class="exp-txt">Válido hasta el <strong id="expFecha"></strong> · <strong id="expDias"></strong> días</span>
+        <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#888">
+          <div style="width:8px;height:8px;border-radius:50%;background:#2196F3"></div>Premio (compra 5)
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#888">
+          <div style="width:8px;height:8px;border-radius:50%;background:#FFD307"></div>Premio final (compra 7)
         </div>
       </div>
     </div>
 
-    <div class="qr-wrap">
-      <div class="qr-label">Muestra este código en cada compra</div>
-      <div class="qr-inner">
-        <div id="visitaQRDiv"></div>
-      </div>
-      <div class="qr-id" id="visitaId"></div>
-      <div class="suc-pill">
-        <div class="suc-dot"></div>
-        <span id="sucLabel">Cargando...</span>
+    <!-- TABS Mi QR / Mis Premios -->
+    <div class="card-tabs-wrap">
+      <button class="card-tab-btn on" id="ctab-qr" onclick="switchTab('qr')">
+        📲 Mi QR
+      </button>
+      <button class="card-tab-btn" id="ctab-premios" onclick="switchTab('premios')" style="position:relative">
+        🎫 Mis Premios
+        <div id="premiosBadge" style="display:none;position:absolute;top:6px;right:6px;width:8px;height:8px;background:#E02020;border-radius:50%"></div>
+      </button>
+    </div>
+
+    <!-- PANEL Mi QR -->
+    <div class="card-tab-panel on" id="cpanel-qr">
+      <div class="qr-panel">
+        <div class="qr-panel-title">Tu código de compras</div>
+        <div class="qr-panel-sub">Muéstralo al cajero en <strong>cada compra</strong> para acumular</div>
+        <div class="qr-inner-box">
+          <div id="visitaQRDiv"></div>
+        </div>
+        <div class="qr-id" id="visitaId"></div>
+        <div class="suc-pill">
+          <div class="suc-dot"></div>
+          <span id="sucLabel">D'Poyo</span>
+        </div>
+        <div class="qr-warning">
+          ⚠️ <strong>Este código es solo para acumular compras.</strong><br>
+          Para canjear un premio ve a <strong>"Mis Premios"</strong>
+        </div>
       </div>
     </div>
 
+    <!-- PANEL Mis Premios -->
+    <div class="card-tab-panel" id="cpanel-premios">
+      <div id="premiosContent"></div>
+    </div>
+
+    <!-- STATS -->
     <div class="stats-grid">
       <div class="stat"><div class="stat-n" id="stCompras">0</div><div class="stat-l">Compras</div></div>
       <div class="stat"><div class="stat-n" id="stCiclo">0/7</div><div class="stat-l">Ciclo</div></div>
