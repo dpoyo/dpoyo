@@ -1,6 +1,6 @@
 // D'POYO — app.js v2.0
 import { db } from './firebase-config.js';
-import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, setDoc, getDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const SUCURSALES = [
   { nombre:"Sucursal Estado",    lat:-33.44287311394171, lng:-70.64896774857381, radio:200 },
@@ -45,7 +45,43 @@ async function initApp() {
       if (snap.exists()) { currentUser = { ...currentUser, ...snap.data() }; saveLocalUser(currentUser); }
     } catch(e) {}
     showScreen('card'); renderCard(); startGeo();
+    startRealtimeSync();
   } else { showScreen('register'); }
+}
+
+// Listener en tiempo real — actualiza la tarjeta cuando el admin escanea
+function startRealtimeSync() {
+  if (!currentUser?.id) return;
+  try {
+    onSnapshot(doc(db, 'clientes', currentUser.id), (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      const premioAntes = currentUser.premio_activo;
+      currentUser = { ...currentUser, ...data };
+      saveLocalUser(currentUser);
+      renderCard();
+      // Si acaba de llegar un premio nuevo, cambiar a pestaña Mis Premios
+      if (data.premio_activo && !data.premio_activo.usado &&
+          (!premioAntes || premioAntes.id !== data.premio_activo.id)) {
+        premiosQRDone = {};
+        switchTab('premios');
+        showPremioAlert(data.premio_activo);
+      }
+    });
+  } catch(e) { console.warn('Realtime sync not available'); }
+}
+
+function showPremioAlert(premio) {
+  const isCono = premio.tipo === 'cono';
+  const msg = isCono
+    ? '🏆 ¡Felicidades! Ganaste un Súper Cono gratis. Muestra el QR en caja.'
+    : `🎫 ¡Ganaste un ${premio.tipo} de descuento! Muéstralo al pagar.`;
+  // Banner temporal
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#FFD307;color:#1e1e1e;padding:14px 16px;text-align:center;font-weight:600;font-size:14px;z-index:999;animation:slideDown .4s ease';
+  banner.textContent = msg;
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 4000);
 }
 
 function showScreen(name) {
@@ -54,6 +90,7 @@ function showScreen(name) {
 }
 
 // ---- REGISTRO ----
+// También iniciar sync después de registro
 window.doRegister = async function() {
   const nombre = document.getElementById('reg-nombre').value.trim();
   const correo = document.getElementById('reg-correo').value.trim();
@@ -81,6 +118,7 @@ window.doRegister = async function() {
   try { await setDoc(doc(db,'clientes',id),{...user,createdAt:serverTimestamp()}); } catch(e) {}
   saveLocalUser(user); currentUser=user;
   showScreen('card'); renderCard(); startGeo();
+  startRealtimeSync();
 };
 
 // ---- TABS Mi QR / Mis Premios ----
@@ -139,11 +177,10 @@ function renderQRVisita() {
   if (qrVisitaDone) return;
   document.getElementById('visitaId').textContent  = currentUser.id;
   document.getElementById('sucLabel').textContent  = currentUser.suc_frecuente||"D'Poyo";
-  new QRCode(document.getElementById('visitaQRDiv'),{
+  waitForQRLib(()=>{ new QRCode(document.getElementById('visitaQRDiv'),{
     text:currentUser.id, width:150, height:150,
     colorDark:'#1e1e1e', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H,
-  });
-  qrVisitaDone=true;
+  }); qrVisitaDone=true; });
 }
 
 // ---- PREMIOS ----
@@ -168,7 +205,7 @@ function renderPremios() {
     const isCono=premio.tipo==='cono';
     const color=isCono?'#FFD307':(premio.tipo==='40%'?'#2196F3':'#4CAF50');
     const textColor=isCono?'#1e1e1e':'#fff';
-    const title=isCono?'🏆 SÚPER CONO GRATIS':`🎫 ${premio.tipo} DE DESCUENTO`;
+    const title=isCono?'🏆 SÚPER CONO GRATIS':`🎫 DESCUENTO ${premio.tipo}`;
     const h=isCono?'¡Lo lograste!':`¡${premio.tipo} en tu próxima compra!`;
     const sub=isCono?'Muestra este QR en caja para cobrarlo':'Muestra este QR al cajero al pagar';
     const qrId='pqr_'+premio.id.replace(/-/g,'_');
@@ -195,13 +232,13 @@ function renderPremios() {
       </div>
     </div>`;
 
-    setTimeout(()=>{
+    waitForQRLib(()=>{
       const el=document.getElementById(qrId);
       if (el&&!el.hasChildNodes()&&!premiosQRDone[qrId]) {
         new QRCode(el,{text:premio.id,width:120,height:120,colorDark:'#1e1e1e',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
         premiosQRDone[qrId]=true;
       }
-    },100);
+    });
   }
 
   if (hist.length>0) {
@@ -283,6 +320,14 @@ function loadLocalUser(){try{return JSON.parse(localStorage.getItem('dpoyo_user'
 function haversine(la1,lo1,la2,lo2){
   const R=6371000,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;
   return R*2*Math.atan2(Math.sqrt(Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2),Math.sqrt(1-Math.sin(dLa/2)**2-Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2));
+}
+
+
+// ---- WAIT FOR QR LIB ----
+function waitForQRLib(cb, attempts=0) {
+  if (window.QRCode) { cb(); return; }
+  if (attempts > 20) return;
+  setTimeout(() => waitForQRLib(cb, attempts+1), 200);
 }
 
 const s=document.createElement('script');
