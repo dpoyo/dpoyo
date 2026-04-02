@@ -192,41 +192,48 @@ async function processVisita(clientId) {
     updates.ciclo_actual=nuevoCiclo;
 
   } else if (nuevoCiclo>=7) {
-    // COMPRA 7
-    updates.ciclo_actual=0;
+    // COMPRA 7 — resetear ciclo Y descuentos_usados para nuevo ciclo limpio
+    updates.ciclo_actual = 0;
+    updates.descuentos_usados = 0; // RESET — nuevo ciclo parte limpio
+
     if (descUsados===0) {
-      // No usó ningún dcto → Súper Cono
-      const id=`CANJE-${Math.floor(1000+Math.random()*9000)}-${initials}`;
-      premioPara={id,vence:vence.toISOString(),usado:false,tipo:'cono'};
-      updates.conos_ganados=(cl.conos_ganados||0)+1;
-      resultType='prize';
-      resultTitle=`🏆 ¡SÚPER CONO GRATIS! — ${cl.nombre}`;
-      resultSub=`Compra 7 ✓ · Sin descuentos usados · QR: ${id} · Válido ${DIAS_PREMIO} días`;
-    } else {
-      // Verificar si usó el dcto de compra 5
-      const hist=cl.premios_historial||[];
-      const usoComp5=hist.some(p=>!p.reemplazado&&(p.tipo==='40%'||(p.tipo==='20%'&&p.id?.includes('20P'))));
-      const premioActUsado=cl.premio_activo?.usado;
-      // Si el premio activo actual (compra 5) no fue usado → 40%
-      if (cl.premio_activo&&!cl.premio_activo.usado&&(cl.premio_activo.tipo==='40%'||cl.premio_activo.tipo==='20%')) {
-        // Tiene premio de compra 5 sin usar → dar 40%
-        const id=`DESC-${Math.floor(1000+Math.random()*9000)}-40F`;
-        // Eliminar el premio pendiente de compra 5
-        const histUp=cl.premios_historial||[];
-        histUp.push({tipo:cl.premio_activo.tipo,id:cl.premio_activo.id,fecha:'Reemplazado en compra 7',reemplazado:true});
-        updates.premios_historial=histUp;
-        premioPara={id,vence:vence.toISOString(),usado:false,tipo:'40%'};
-        resultType='prize';
-        resultTitle=`🎫 40% DE DESCUENTO — ${cl.nombre}`;
-        resultSub=`Compra 7 ✓ · No usó dcto compra 5 · QR: ${id} · Válido ${DIAS_PREMIO} días`;
+      // Verificar si tiene un Súper Cono activo sin canjear del ciclo anterior
+      const tieneConoActivo = cl.premio_activo && !cl.premio_activo.usado && cl.premio_activo.tipo==='cono';
+      if (tieneConoActivo) {
+        // Bloquear — debe canjear el anterior primero
+        updates.ciclo_actual = 0;
+        updates.descuentos_usados = 0;
+        resultType = 'err';
+        resultTitle = `⚠️ CANJE PENDIENTE — ${cl.nombre}`;
+        resultSub = `Tiene un Súper Cono sin canjear (${cl.premio_activo.id}). Debe canjearlo antes de generar uno nuevo.`;
+        // No generar nuevo premio
+        premioPara = null;
       } else {
-        // Usó dcto compra 5 → 20%
-        const id=`DESC-${Math.floor(1000+Math.random()*9000)}-20F`;
-        premioPara={id,vence:vence.toISOString(),usado:false,tipo:'20%'};
+        // No usó ningún dcto y no tiene cono pendiente → Súper Cono nuevo
+        const id=`CANJE-${Math.floor(1000+Math.random()*9000)}-${initials}`;
+        premioPara={id,vence:vence.toISOString(),usado:false,tipo:'cono'};
+        updates.conos_ganados=(cl.conos_ganados||0)+1;
         resultType='prize';
-        resultTitle=`🎫 20% DESCUENTO FINAL — ${cl.nombre}`;
-        resultSub=`Compra 7 ✓ · Usó descuentos anteriores · QR: ${id} · Válido ${DIAS_PREMIO} días`;
+        resultTitle=`🏆 ¡SÚPER CONO GRATIS! — ${cl.nombre}`;
+        resultSub=`Compra 7 ✓ · Sin descuentos usados · QR: ${id} · Válido ${DIAS_PREMIO} días`;
       }
+    } else if (cl.premio_activo&&!cl.premio_activo.usado&&(cl.premio_activo.tipo==='40%'||cl.premio_activo.tipo==='20%')) {
+      // Tiene premio de compra 5 sin usar → dar 40%
+      const id=`DESC-${Math.floor(1000+Math.random()*9000)}-40F`;
+      const histUp=cl.premios_historial||[];
+      histUp.push({tipo:cl.premio_activo.tipo,id:cl.premio_activo.id,fecha:'Reemplazado en compra 7',reemplazado:true});
+      updates.premios_historial=histUp;
+      premioPara={id,vence:vence.toISOString(),usado:false,tipo:'40%'};
+      resultType='prize';
+      resultTitle=`🎫 40% DE DESCUENTO — ${cl.nombre}`;
+      resultSub=`Compra 7 ✓ · No usó dcto compra 5 · QR: ${id} · Válido ${DIAS_PREMIO} días`;
+    } else {
+      // Usó dcto compra 5 → 20%
+      const id=`DESC-${Math.floor(1000+Math.random()*9000)}-20F`;
+      premioPara={id,vence:vence.toISOString(),usado:false,tipo:'20%'};
+      resultType='prize';
+      resultTitle=`🎫 20% DESCUENTO FINAL — ${cl.nombre}`;
+      resultSub=`Compra 7 ✓ · Usó descuentos anteriores · QR: ${id} · Válido ${DIAS_PREMIO} días`;
     }
 
   } else {
@@ -269,7 +276,10 @@ async function processCanje(canjeId,tipo) {
   hist.push({tipo:premio.tipo,id:canjeId,fecha:fechaHoy,usado:true});
 
   const updateData={'premio_activo.usado':true,premios_historial:hist};
+  // Si es descuento (no cono), incrementar contador
   if (premio.tipo!=='cono') updateData.descuentos_usados=(cl.descuentos_usados||0)+1;
+  // Si el ciclo ya está en 0 (premio post compra 7), asegurarse que descuentos_usados quede en 0
+  if ((cl.ciclo_actual||0)===0) updateData.descuentos_usados=0;
 
   await updateDoc(clRef,updateData);
   await addDoc(collection(db,'canjes'),{
