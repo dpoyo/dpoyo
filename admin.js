@@ -150,6 +150,18 @@ async function processVisita(clientId) {
   const vence         = new Date(); vence.setDate(vence.getDate()+DIAS_PREMIO);
   const initials      = cl.nombre.slice(0,3).toUpperCase();
 
+  // VALIDAR: máximo 1 compra por día calendario
+  const hoy = new Date().toLocaleDateString('es-CL');
+  const ultimaCompra = cl.ultima_compra_fecha || null;
+  if (ultimaCompra && ultimaCompra === hoy) {
+    showResult('err',
+      `⚠️ YA REGISTRADO HOY — ${cl.nombre}`,
+      `Este cliente ya acumuló una compra hoy ${hoy}. Puede volver mañana.`
+    );
+    return;
+  }
+  updates.ultima_compra_fecha = hoy;
+
   await addDoc(collection(db,'visitas'),{
     cliente_id:clientId, nombre:cl.nombre,
     sucursal:currentAdmin.suc, admin:currentAdmin.email,
