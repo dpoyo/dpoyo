@@ -480,20 +480,41 @@ function tryPushNotif(cycle,left) {
 // =============================================
 window.requestNotif=async function(){
   const btn=document.getElementById('btnNotif');
+  console.log('[FCM] requestNotif iniciado');
+  console.log('[FCM] currentUser:', JSON.stringify(currentUser));
+  console.log('[FCM] VAPID_KEY:', VAPID_KEY);
   try {
     const perm=await Notification.requestPermission();
+    console.log('[FCM] Permiso notificaciones:', perm);
     if(perm!=='granted'){
       if(btn){btn.textContent='🔕 Notificaciones bloqueadas';}
       return;
     }
-    await navigator.serviceWorker.ready;
-    const token=await getToken(messaging,{vapidKey:VAPID_KEY});
+    console.log('[FCM] Esperando SW ready...');
+    const sw=await navigator.serviceWorker.ready;
+    console.log('[FCM] SW listo:', sw.active?.scriptURL);
+    console.log('[FCM] Llamando getToken...');
+    let token;
+    try {
+      token=await getToken(messaging,{vapidKey:VAPID_KEY});
+      console.log('[FCM] Token obtenido:', token);
+    } catch(tokenErr){
+      console.error('[FCM] ERROR en getToken:', tokenErr.code, tokenErr.message, tokenErr);
+      throw tokenErr;
+    }
     if(token){
-      console.log('FCM token:',token);
+      console.log('[FCM] currentUser.id para Firestore:', currentUser?.id);
       if(currentUser?.id){
-        await updateDoc(doc(db,'clientes',currentUser.id),{
-          fcmToken:token, notif_activa:true,
-        }).catch(console.warn);
+        try {
+          await updateDoc(doc(db,'clientes',currentUser.id),{
+            fcmToken:token, notif_activa:true,
+          });
+          console.log('[FCM] Token guardado en Firestore OK');
+        } catch(dbErr){
+          console.error('[FCM] ERROR guardando en Firestore:', dbErr.code, dbErr.message, dbErr);
+        }
+      } else {
+        console.warn('[FCM] No hay currentUser.id — token NO guardado');
       }
       currentUser.notif_activa=true;
       currentUser.fcmToken=token;
@@ -501,11 +522,11 @@ window.requestNotif=async function(){
       if(btn){btn.textContent='✓ Notificaciones activas';btn.classList.add('active');}
       checkProximity();
     } else {
-      console.warn('No se obtuvo FCM token');
+      console.warn('[FCM] getToken devolvió vacío — verifica VAPID key y permisos SW');
       if(btn){btn.textContent='⚠️ Error al activar';}
     }
   } catch(err){
-    console.error('Error FCM:',err);
+    console.error('[FCM] ERROR general:', err.code, err.message, err);
     if(Notification.permission==='granted'){
       currentUser.notif_activa=true;saveLocalUser(currentUser);
       if(btn){btn.textContent='✓ Notificaciones activas';btn.classList.add('active');}
