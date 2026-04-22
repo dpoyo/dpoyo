@@ -490,13 +490,23 @@ window.requestNotif=async function(){
       if(btn){btn.textContent='🔕 Notificaciones bloqueadas';}
       return;
     }
-    console.log('[FCM] Esperando SW ready...');
-    const sw=await navigator.serviceWorker.ready;
-    console.log('[FCM] SW listo:', sw.active?.scriptURL);
-    console.log('[FCM] Llamando getToken...');
+    console.log('[FCM] Registrando firebase-messaging-sw.js...');
+    let fcmSwReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    console.log('[FCM] SW registrado:', fcmSwReg.scope);
+    // Esperar que el SW esté activo
+    await new Promise(resolve => {
+      if (fcmSwReg.active) { resolve(); return; }
+      const w = fcmSwReg.installing || fcmSwReg.waiting;
+      if (w) { w.addEventListener('statechange', e => { if (e.target.state==='activated') resolve(); }); }
+      else { fcmSwReg.addEventListener('updatefound', () => {
+        const sw = fcmSwReg.installing;
+        sw.addEventListener('statechange', e => { if (e.target.state==='activated') resolve(); });
+      }); }
+    });
+    console.log('[FCM] SW activo, llamando getToken...');
     let token;
     try {
-      token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:sw});
+      token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:fcmSwReg});
       console.log('[FCM] Token obtenido:', token);
     } catch(tokenErr){
       console.error('[FCM] ERROR en getToken:', tokenErr.code, tokenErr.message, tokenErr);
