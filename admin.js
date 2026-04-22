@@ -1,7 +1,8 @@
 // D'POYO — admin.js v3.0 FINAL
-import { db, auth } from './firebase-config.js';
+import { db, auth, app } from './firebase-config.js';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, updateDoc, query, orderBy, limit, where, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 
 // =============================================
 //  ROLES
@@ -426,14 +427,23 @@ async function renderStats() {
 // =============================================
 //  CAMPAIGN (superadmin)
 // =============================================
-window.sendCampaign=function(){
+window.sendCampaign=async function(){
   const msg=document.getElementById('campMsg').value.trim();
   if (!msg){alert('Escribe un mensaje primero');return;}
-  const n=allClients.length;
-  if (confirm(`¿Enviar este mensaje a ${n} cliente${n===1?'':'s'}?\n\n"${msg}"`)){
-    alert(`✓ Mensaje enviado a ${n} clientes`);
+  const withToken=allClients.filter(c=>c.fcmToken&&c.notif_activa);
+  const n=withToken.length;
+  if (n===0){alert('No hay clientes con notificaciones activas');return;}
+  if (!confirm(`¿Enviar notificación push a ${n} cliente${n===1?'':'s'}?\n\n"${msg}"`)) return;
+  try {
+    const functions=getFunctions(app,'us-central1');
+    const sendCampaignFn=httpsCallable(functions,'sendCampaign');
+    const res=await sendCampaignFn({title:"D'Poyo",body:msg});
+    alert(`✓ Enviado: ${res.data.sent} exitosos, ${res.data.failed} fallidos`);
     document.getElementById('campMsg').value='';
     document.getElementById('campCount').textContent='0 / 160';
+  } catch(e){
+    console.error('Error campaña:',e);
+    alert('Error al enviar: '+e.message);
   }
 };
 
