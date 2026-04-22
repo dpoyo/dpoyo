@@ -73,6 +73,7 @@ async function initApp() {
       if (snap.exists()) { currentUser = { ...currentUser, ...snap.data() }; saveLocalUser(currentUser); }
     } catch(e) {}
     showScreen('card'); renderCard(); startGeo(); startRealtimeSync(); setupForegroundMessages();
+    if(currentUser.notif_activa && Notification.permission==='granted') silentRefreshToken();
   } else {
     // Primera vez — mostrar onboarding
     const vioOnboarding = localStorage.getItem('dpoyo_onboarding');
@@ -234,6 +235,10 @@ function renderCard() {
   renderQRVisita();
   renderPremios();
   updatePremiosBadge();
+  const btn=document.getElementById('btnNotif');
+  if(btn&&u.notif_activa&&Notification.permission==='granted'){
+    btn.textContent='✓ Notificaciones activas';btn.classList.add('active');
+  }
 }
 
 function renderStamps(cycle) {
@@ -478,6 +483,19 @@ function tryPushNotif(cycle,left) {
 // =============================================
 //  NOTIFICACIONES
 // =============================================
+async function silentRefreshToken(){
+  try{
+    const reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+    const token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:reg});
+    if(token&&currentUser?.id){
+      await updateDoc(doc(db,'clientes',currentUser.id),{fcmToken:token,notif_activa:true}).catch(()=>{});
+      currentUser.fcmToken=token;
+      saveLocalUser(currentUser);
+    }
+  }catch(e){ console.warn('[FCM] silentRefresh failed:',e.message); }
+}
+
 window.requestNotif=async function(){
   const btn=document.getElementById('btnNotif');
   console.log('[FCM] requestNotif iniciado');
