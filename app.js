@@ -496,7 +496,7 @@ window.requestNotif=async function(){
     console.log('[FCM] Llamando getToken...');
     let token;
     try {
-      token=await getToken(messaging,{vapidKey:VAPID_KEY});
+      token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:sw});
       console.log('[FCM] Token obtenido:', token);
     } catch(tokenErr){
       console.error('[FCM] ERROR en getToken:', tokenErr.code, tokenErr.message, tokenErr);
