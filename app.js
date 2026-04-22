@@ -1,6 +1,7 @@
 // D'POYO — app.js v3.0 FINAL
-import { db } from './firebase-config.js';
-import { doc, setDoc, getDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { db, messaging } from './firebase-config.js';
+import { doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
 // =============================================
 //  CONFIGURACIÓN
@@ -11,7 +12,7 @@ const SUCURSALES = [
 ];
 const DIAS_PREMIO       = 7;
 const INTERVALO_NOTIF_H = 48;
-const VAPID_KEY         = 'BHq8wHxBgjc6gJSeHsdBYhDe0mpBNSMoJIU3eI46H1Ai9Q8eHBHzRrsBZiKcyhgoU-sk_l0MhNjTSnIdwUnJZZc';
+const VAPID_KEY         = 'BFIvFqfHVKX94eFettJrUvKIoYIcfvX6-m_ZvRgfHV3CUw8Uf9dPGZWnpgr_LoGMjP_b-vOcwClUKzkNYwf4UIw';
 
 const MENSAJES_PROX = [
   "🍗 Oye, D'Poyo está a pasos. ¿Vas a pasar de largo? Te faltan {V} compras para el próximo premio.",
@@ -71,7 +72,7 @@ async function initApp() {
       const snap = await getDoc(doc(db, 'clientes', currentUser.id));
       if (snap.exists()) { currentUser = { ...currentUser, ...snap.data() }; saveLocalUser(currentUser); }
     } catch(e) {}
-    showScreen('card'); renderCard(); startGeo(); startRealtimeSync();
+    showScreen('card'); renderCard(); startGeo(); startRealtimeSync(); setupForegroundMessages();
   } else {
     // Primera vez — mostrar onboarding
     const vioOnboarding = localStorage.getItem('dpoyo_onboarding');
@@ -478,14 +479,60 @@ function tryPushNotif(cycle,left) {
 //  NOTIFICACIONES
 // =============================================
 window.requestNotif=async function(){
-  const perm=await Notification.requestPermission();
-  if(perm==='granted'){
-    currentUser.notif_activa=true;saveLocalUser(currentUser);
-    const btn=document.getElementById('btnNotif');
-    if(btn){btn.textContent='✓ Notificaciones activas';btn.classList.add('active');}
-    checkProximity();
+  const btn=document.getElementById('btnNotif');
+  try {
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){
+      if(btn){btn.textContent='🔕 Notificaciones bloqueadas';}
+      return;
+    }
+    await navigator.serviceWorker.ready;
+    const token=await getToken(messaging,{vapidKey:VAPID_KEY});
+    if(token){
+      console.log('FCM token:',token);
+      if(currentUser?.id){
+        await updateDoc(doc(db,'clientes',currentUser.id),{
+          fcmToken:token, notif_activa:true,
+        }).catch(console.warn);
+      }
+      currentUser.notif_activa=true;
+      currentUser.fcmToken=token;
+      saveLocalUser(currentUser);
+      if(btn){btn.textContent='✓ Notificaciones activas';btn.classList.add('active');}
+      checkProximity();
+    } else {
+      console.warn('No se obtuvo FCM token');
+      if(btn){btn.textContent='⚠️ Error al activar';}
+    }
+  } catch(err){
+    console.error('Error FCM:',err);
+    if(Notification.permission==='granted'){
+      currentUser.notif_activa=true;saveLocalUser(currentUser);
+      if(btn){btn.textContent='✓ Notificaciones activas';btn.classList.add('active');}
+      checkProximity();
+    }
   }
 };
+
+// =============================================
+//  FOREGROUND MESSAGES
+// =============================================
+function setupForegroundMessages(){
+  try{
+    onMessage(messaging,(payload)=>{
+      const{title,body}=payload.notification||{};
+      if(Notification.permission==='granted'&&title){
+        navigator.serviceWorker.ready.then(sw=>{
+          sw.showNotification(title,{
+            body:body||'',icon:'icons/icon-192.png',
+            badge:'icons/icon-192.png',tag:'dpoyo-fcm',
+            data:payload.data||{url:'/'},
+          });
+        });
+      }
+    });
+  }catch(e){console.warn('onMessage no disponible:',e);}
+}
 
 // =============================================
 //  INSTALL
