@@ -1,5 +1,5 @@
 // D'POYO — sw.js
-const CACHE = 'dpoyo-v2';
+const CACHE = 'dpoyo-v3';
 const ASSETS = ['/', '/index.html', '/style.css', '/app.js', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {
