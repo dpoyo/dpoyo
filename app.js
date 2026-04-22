@@ -11,7 +11,7 @@ const SUCURSALES = [
 ];
 const DIAS_PREMIO       = 7;
 const INTERVALO_NOTIF_H = 48;
-const VAPID_KEY         = 'BFIvFqfHVKX94eFettJrUvKIoYIcfvX6-m_ZvRgfHV3CUw8Uf9dPGZWnpgr_LoGMjP_b-vOcwClUKzkNYwf4UIw';
+const VAPID_KEY         = 'BHq8wHxBgjc6gJSeHsdBYhDe0mpBNSMoJIU3eI46H1Ai9Q8eHBHzRrsBZiKcyhgoU-sk_l0MhNjTSnIdwUnJZZc';
 
 const MENSAJES_PROX = [
   "🍗 Oye, D'Poyo está a pasos. ¿Vas a pasar de largo? Te faltan {V} compras para el próximo premio.",
