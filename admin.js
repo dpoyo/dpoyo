@@ -1,7 +1,7 @@
 // D'POYO — admin.js v3.0 FINAL
 import { db, auth, app } from './firebase-config.js';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, updateDoc, query, orderBy, limit, where, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, updateDoc, setDoc, query, orderBy, limit, where, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 
 // =============================================
@@ -447,7 +447,25 @@ window.sendCampaign=async function(){
   }
 };
 
-window.saveBdayMsg=function(){alert('✓ Mensaje de cumpleaños guardado');};
+window.saveBdayMsg=async function(){
+  const msg=document.getElementById('bdayMsgCamp').value.trim();
+  if (!msg){alert('Escribe un mensaje primero');return;}
+  const hoy=new Date();
+  const mm=String(hoy.getMonth()+1).padStart(2,'0');
+  const dd=String(hoy.getDate()).padStart(2,'0');
+  const hoyMD=`${mm}-${dd}`;
+  const cumpleaneros=allClients.filter(c=>c.cumpleanos&&c.cumpleanos.slice(5)===hoyMD&&c.fcmToken&&c.notif_activa);
+  const n=cumpleaneros.length;
+  if (n===0){alert('No hay clientes con cumpleaños hoy que tengan notificaciones activas');return;}
+  if (!confirm(`¿Enviar felicitación de cumpleaños a ${n} cliente${n===1?'':'s'}?\n\n"${msg}"`)) return;
+  try {
+    await setDoc(doc(db,'config','bday'),{message:msg},{merge:true});
+    const functions=getFunctions(app,'us-central1');
+    const fn=httpsCallable(functions,'sendBirthdaysNow');
+    const res=await fn();
+    alert(`🎂 Enviado: ${res.data.sent} exitosos, ${res.data.failed} fallidos`);
+  } catch(e){alert('Error: '+e.message);}
+};
 
 function renderProxMsgs() {
   const c=document.getElementById('proxList');
@@ -476,11 +494,17 @@ window.selBdayDays=function(n,el){
   document.querySelectorAll('.day-opt').forEach(d=>d.classList.remove('on'));
   el.classList.add('on'); bdayDays=n;
 };
-window.saveBdayConfig=function(){
-  const btn=document.querySelector('.save-config-btn');
-  btn.textContent='✓ GUARDADO'; btn.style.background='#22c55e';
-  setTimeout(()=>{btn.textContent='GUARDAR CONFIGURACIÓN';btn.style.background='';},2000);
+window.saveBdayConfig=async function(){
+  const active = document.getElementById('bdayToggle').checked;
+  const prizeName = document.getElementById('bdayPrizeName').value.trim();
+  try {
+    await setDoc(doc(db,'config','bday'),{active,days:bdayDays,prizeName},{merge:true});
+    const btn=document.querySelector('.save-config-btn');
+    btn.textContent='✓ GUARDADO'; btn.style.background='#22c55e';
+    setTimeout(()=>{btn.textContent='GUARDAR CONFIGURACIÓN';btn.style.background='';},2000);
+  } catch(e){alert('Error al guardar config: '+e.message);}
 };
+
 
 // =============================================
 //  UTILS
