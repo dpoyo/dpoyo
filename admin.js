@@ -389,14 +389,29 @@ window.showClient=function(id){
       </div>
     </div>
     ${c.premio_activo&&!c.premio_activo.usado?`
-    <div style="background:#1a1200;border:1px solid #FFD307;border-radius:8px;padding:10px;font-size:12px;color:#FFD307">
+    <div style="background:#1a1200;border:1px solid #FFD307;border-radius:8px;padding:10px;font-size:12px;color:#FFD307;margin-bottom:10px">
       🎫 Premio activo: ${c.premio_activo.tipo==='cono'?'Súper Cono':c.premio_activo.tipo+' dcto'}<br>
       <span style="color:#aaa">ID: ${c.premio_activo.id} · Vence: ${new Date(c.premio_activo.vence).toLocaleDateString('es-CL')}</span>
-    </div>`:''}`;
+    </div>`:''}
+    <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:10px;font-size:12px;display:flex;align-items:center;justify-content:space-between">
+      <span style="color:${c.notif_activa?'#4CAF50':'#888'}">🔔 Notificaciones: ${c.notif_activa?'Activas':'Sin activar'}</span>
+      ${c.fcmToken?`<button onclick="resetToken('${c.id}')" style="background:#2a0a0a;border:1px solid #8a2a2a;color:#f08080;font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer">Limpiar token</button>`:'<span style="color:#555;font-size:11px">Sin token</span>'}
+    </div>`;
   document.getElementById('clientModal').classList.add('open');
 };
 
 window.closeModal=function(){document.getElementById('clientModal').classList.remove('open');};
+
+window.resetToken=async function(id){
+  if (!confirm('¿Limpiar token de notificaciones? El cliente deberá activarlas de nuevo desde la app.')) return;
+  try {
+    await updateDoc(doc(db,'clientes',id),{fcmToken:null,notif_activa:false});
+    const c=allClients.find(cl=>cl.id===id);
+    if(c){c.fcmToken=null;c.notif_activa=false;}
+    closeModal();
+    alert('✓ Token limpiado. El cliente verá el botón de activar notificaciones la próxima vez que abra la app.');
+  } catch(e){alert('Error: '+e.message);}
+};
 
 // =============================================
 //  STATS
