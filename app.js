@@ -1,7 +1,7 @@
 // D'POYO — app.js v3.0 FINAL
 import { db, messaging } from './firebase-config.js';
 import { doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+import { getToken, onMessage, deleteToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
 // =============================================
 //  CONFIGURACIÓN
@@ -522,6 +522,7 @@ window.requestNotif=async function(){
       }); }
     });
     console.log('[FCM] SW activo, llamando getToken...');
+    try { await deleteToken(messaging); } catch(e) {}
     let token;
     try {
       token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:fcmSwReg});
