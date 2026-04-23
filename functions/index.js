@@ -10,7 +10,7 @@ const ICON = 'https://dpoyo.vercel.app/icons/icon-192.png';
 const LINK = 'https://dpoyo.vercel.app';
 
 // Enviar campaña push a todos los clientes con fcmToken
-exports.sendCampaign = onCall({ region: 'us-central1' }, async (request) => {
+exports.sendCampaign = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
   const { title, body } = request.data;
   if (!title || !body) throw new HttpsError('invalid-argument', 'title y body requeridos');
 
@@ -32,7 +32,7 @@ exports.sendCampaign = onCall({ region: 'us-central1' }, async (request) => {
 });
 
 // Enviar notificación a un cliente específico
-exports.sendToClient = onCall({ region: 'us-central1' }, async (request) => {
+exports.sendToClient = onCall({ region: 'us-central1', invoker: 'public' }, async (request) => {
   const { clientId, title, body } = request.data;
   if (!clientId || !title || !body) throw new HttpsError('invalid-argument', 'clientId, title y body requeridos');
 
@@ -102,6 +102,6 @@ exports.sendBirthdays = onSchedule(
 );
 
 // Manual: callable desde el panel admin (para probar o disparar fuera de hora)
-exports.sendBirthdaysNow = onCall({ region: 'us-central1' }, async () => {
+exports.sendBirthdaysNow = onCall({ region: 'us-central1', invoker: 'public' }, async () => {
   return await _sendBirthdaysLogic();
 });
