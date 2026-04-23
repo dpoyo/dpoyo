@@ -1,5 +1,5 @@
 // D'POYO — sw.js
-const CACHE = 'dpoyo-v3';
+const CACHE = 'dpoyo-v4';
 const ASSETS = ['/', '/index.html', '/style.css', '/app.js', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -27,10 +27,11 @@ self.addEventListener('fetch', e => {
   );
 });
 self.addEventListener('push', e => {
-  let data = { title: "D'Poyo", body: '¡Estás cerca! Ven a sumar tu compra.' };
-  try { data = e.data.json(); } catch {}
-  e.waitUntil(self.registration.showNotification(data.title, {
-    body: data.body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png',
+  const payload = e.data ? e.data.json() : {};
+  const title = payload.notification?.title || payload.title || "D'Poyo";
+  const body  = payload.notification?.body  || payload.body  || '¡Estás cerca! Ven a sumar tu compra.';
+  e.waitUntil(self.registration.showNotification(title, {
+    body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png',
     tag: 'dpoyo-push', vibrate: [200,100,200], data: { url: '/' },
   }));
 });
