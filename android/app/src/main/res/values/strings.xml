@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">D´Poyo</string>
+    <string name="title_activity_main">D´Poyo</string>
+    <string name="package_name">cl.dpoyo.app</string>
+    <string name="custom_url_scheme">cl.dpoyo.app</string>
+</resources>

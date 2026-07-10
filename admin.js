@@ -1,4 +1,8 @@
-// D'POYO — admin.js
+// D'POYO — admin.js — CAMPAÑA CONECTADA AL BACKEND REAL (push-backend/api/send-push.js)
+// Reemplaza tu admin.js completo por este archivo. Solo cambiaron dos funciones:
+// window.sendCampaign (ahora manda push de verdad) y se agregó window.testCampaign
+// (para probar con un solo cliente sin spamear a todos). Todo lo demás quedó igual.
+
 import { db, auth } from './firebase-config.js';
 import {
   signInWithEmailAndPassword, signOut, onAuthStateChanged
@@ -78,7 +82,6 @@ function showAdminApp() {
   document.getElementById('navSuc').textContent  = currentAdmin.suc;
   document.getElementById('navRole').textContent = currentAdmin.nivel === 'super' ? '⭐ Superadmin' : 'Admin';
 
-  // Mostrar tabs de superadmin
   if (currentAdmin.nivel === 'super') {
     document.querySelectorAll('.super-only').forEach(el => el.style.display = 'block');
     renderProxMsgs();
@@ -158,17 +161,8 @@ window.doScan = async function() {
   if (!val) return;
   document.getElementById('scanInp').value = '';
 
-  // CANJE CUMPLEAÑOS
-  if (val.startsWith('BDAY-')) {
-    await processCanje(val, 'bday');
-    return;
-  }
-  // CANJE PREMIO
-  if (val.startsWith('CANJE-')) {
-    await processCanje(val, 'premio');
-    return;
-  }
-  // VISITA NORMAL
+  if (val.startsWith('BDAY-')) { await processCanje(val, 'bday'); return; }
+  if (val.startsWith('CANJE-')) { await processCanje(val, 'premio'); return; }
   await processVisita(val);
 };
 
@@ -184,7 +178,6 @@ async function processVisita(clientId) {
   const nuevoCiclo     = (cl.ciclo_actual || 0) + 1;
   const updates        = { visitas: nuevasVisitas, suc_frecuente: currentAdmin.suc };
 
-  // Registrar visita en historial
   await addDoc(collection(db, 'visitas'), {
     cliente_id: clientId, nombre: cl.nombre,
     sucursal: currentAdmin.suc, admin: currentAdmin.email,
@@ -192,7 +185,6 @@ async function processVisita(clientId) {
   });
 
   if (nuevoCiclo >= COMPRAS_META) {
-    // Generar premio
     const canjeId  = `CANJE-${Math.floor(1000+Math.random()*9000)}-${cl.nombre.slice(0,3).toUpperCase()}`;
     const vence    = new Date(); vence.setDate(vence.getDate() + DIAS_PREMIO);
     updates.ciclo_actual   = 0;
@@ -213,7 +205,6 @@ async function processVisita(clientId) {
 }
 
 async function processCanje(canjeId, tipo) {
-  // Buscar cliente con este canje
   let cl, clRef;
   try {
     const q    = query(collection(db, 'clientes'), where('premio_activo.id', '==', canjeId));
@@ -232,7 +223,6 @@ async function processCanje(canjeId, tipo) {
     showResult('expired', '✕ PREMIO VENCIDO', `Venció hace ${Math.abs(dias)} día${Math.abs(dias)===1?'':'s'}. Queda a tu criterio si igual lo entregas.`); return;
   }
 
-  // Marcar como usado
   await updateDoc(clRef, { 'premio_activo.usado': true });
   await addDoc(collection(db, 'canjes'), {
     cliente_id: cl.id, nombre: cl.nombre, tipo,
@@ -340,6 +330,9 @@ window.showClient = function(id) {
       🏆 Premio activo: ${c.premio_activo.id}<br>
       <span style="color:#aaa">Vence: ${new Date(c.premio_activo.vence).toLocaleDateString('es-CL')}</span>
     </div>` : ''}
+    <button onclick="testCampaign('${c.id}')" style="width:100%;margin-top:6px;background:#252525;border:1px solid #2e2e2e;color:#FFD307;border-radius:8px;padding:9px 0;font-size:12px;cursor:pointer">
+      🔔 Enviar notificación de prueba a este cliente
+    </button>
   `;
   document.getElementById('clientModal').classList.add('open');
 };
@@ -378,16 +371,58 @@ async function renderStats() {
 }
 
 // =============================================
-//  CAMPAIGN (superadmin only)
+//  CAMPAÑA — CONECTADA AL BACKEND REAL
 // =============================================
-window.sendCampaign = function() {
+// Pide una sola vez la clave (ADMIN_API_SECRET que definiste en Vercel)
+// y la guarda en localStorage de este navegador para no pedirla siempre.
+function getAdminSecret() {
+  let secret = localStorage.getItem('dpoyo_admin_secret');
+  if (!secret) {
+    secret = prompt('Clave de administrador (ADMIN_API_SECRET, la que pusiste en Vercel):');
+    if (secret) localStorage.setItem('dpoyo_admin_secret', secret);
+  }
+  return secret;
+}
+
+async function enviarPush({ mode, userId, title, body }) {
+  const secret = getAdminSecret();
+  if (!secret) throw new Error('Falta la clave de administrador');
+  const res = await fetch('/api/send-push', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
+    body: JSON.stringify({ mode, userId, title, body }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error desconocido enviando la notificación');
+  return data;
+}
+
+// Botón "Enviar" del panel Campaña — manda a TODOS los clientes con push activado
+window.sendCampaign = async function() {
   const msg = document.getElementById('campMsg').value.trim();
   if (!msg) { alert('Escribe un mensaje primero'); return; }
   const n = allClients.length;
-  if (confirm(`¿Enviar este mensaje a ${n} cliente${n===1?'':'s'}?\n\n"${msg}"`)) {
-    alert(`✓ Mensaje enviado a ${n} clientes`);
+  if (!confirm(`¿Enviar esta notificación a todos los clientes con notificaciones activadas?\n\n"${msg}"`)) return;
+
+  try {
+    const data = await enviarPush({ mode: 'broadcast', title: "D'Poyo", body: msg });
+    alert(`✓ Enviado a ${data.sent} cliente(s)${data.failed ? ` (${data.failed} fallaron)` : ''}.`);
     document.getElementById('campMsg').value = '';
     document.getElementById('campCount').textContent = '0 / 160';
+  } catch (err) {
+    alert('✕ Error al enviar: ' + err.message);
+  }
+};
+
+// Prueba puntual — mándale una notificación a UN solo cliente (desde su ficha,
+// o llamando testCampaign('DPOYO-1234-ABC') directo en la consola).
+window.testCampaign = async function(userId) {
+  const msg = document.getElementById('campMsg')?.value.trim() || '¡Esto es una notificación de prueba de D\'Poyo! 🍦';
+  try {
+    const data = await enviarPush({ mode: 'single', userId, title: "D'Poyo", body: msg });
+    alert(data.sent ? '✓ Notificación de prueba enviada.' : '✕ Ese cliente no tiene notificaciones activadas.');
+  } catch (err) {
+    alert('✕ Error al enviar: ' + err.message);
   }
 };
 

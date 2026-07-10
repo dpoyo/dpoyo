@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "746211541880",
+    "project_id": "dpoyo-e0a5a",
+    "storage_bucket": "dpoyo-e0a5a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:746211541880:android:0d941d6d4c91cce9387e8d",
+        "android_client_info": {
+          "package_name": "cl.dpoyo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_FDNm1H32m7badDO7qfWwbWHo1-tmJfA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
