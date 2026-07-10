@@ -1,7 +1,7 @@
 {
   "name": "dpoyo-final",
   "version": "1.0.0",
-  "description": "<<<<<<< HEAD # D'Poyo PWA — Guía de instalación completa",
+  "description": "D'Poyo PWA",
   "main": "admin.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

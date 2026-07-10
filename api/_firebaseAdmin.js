@@ -9,13 +9,16 @@
 // → "Generar nueva clave privada" → descarga el .json → pega TODO su contenido
 // como valor de FIREBASE_SERVICE_ACCOUNT en Vercel (Project Settings → Environment Variables).
 
-const admin = require('firebase-admin');
+const { initializeApp, getApps, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+const { getMessaging } = require('firebase-admin/messaging');
 
 let app;
 function getAdminApp() {
   if (app) return app;
-  if (admin.apps.length) {
-    app = admin.apps[0];
+  const existing = getApps();
+  if (existing.length) {
+    app = existing[0];
     return app;
   }
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
@@ -23,20 +26,20 @@ function getAdminApp() {
     throw new Error('Falta la variable de entorno FIREBASE_SERVICE_ACCOUNT en Vercel.');
   }
   const serviceAccount = JSON.parse(raw);
-  app = admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+  app = initializeApp({
+    credential: cert(serviceAccount),
   });
   return app;
 }
 
 function db() {
   getAdminApp();
-  return admin.firestore();
+  return getFirestore();
 }
 
 function messaging() {
   getAdminApp();
-  return admin.messaging();
+  return getMessaging();
 }
 
 module.exports = { getAdminApp, db, messaging };
