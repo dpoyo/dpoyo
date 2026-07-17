@@ -155,6 +155,7 @@ function renderCard() {
 
   renderStamps(cycle);
   renderQRVisita();
+  syncNotifButton();
 
   if (u.premio_activo && !u.premio_activo.usado) {
     const dias = diffDays(new Date(u.premio_activo.vence));
@@ -290,6 +291,18 @@ function tryPushNotif(cycle, left, sucNombre) {
 // =============================================
 function esNativo() {
   return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+}
+
+function syncNotifButton() {
+  const btn = document.getElementById('btnNotif');
+  if (!btn) return;
+  if (currentUser?.notif_activa) {
+    btn.textContent = '✓ Notificaciones activas';
+    btn.classList.add('active');
+  } else {
+    btn.textContent = '🔔 Activar notificaciones';
+    btn.classList.remove('active');
+  }
 }
 
 window.requestNotif = async function() {
