@@ -1,16 +1,4 @@
-// D'POYO — app.js (Cliente) — FUSIONADO con detección nativo/web
-// Reemplaza tu www/app.js completo por este archivo.
-// No necesitas tocar tu index.html: la función sigue llamándose
-// window.requestNotif, igual que antes (el botón ya la llama).
-//
-// Qué cambia vs tu versión anterior:
-//  - Detecta si corre empaquetado en Capacitor (Android nativo) o en un
-//    navegador/PWA normal, y usa la vía correcta para pedir permiso y
-//    obtener el token FCM en cada caso.
-//  - En Android nativo, la API window.Notification NO EXISTE (por eso
-//    veías "Notification is not defined" en Logcat) — se reemplazaron
-//    todas esas referencias por un helper que funciona en ambos casos.
-
+// D'POYO — app.js (Cliente)
 import { db, auth, messaging } from './firebase-config.js';
 import {
   doc, setDoc, getDoc, updateDoc, serverTimestamp
@@ -31,8 +19,7 @@ const DIAS_VALIDEZ_PREMIO  = 7;
 const DIAS_VALIDEZ_BDAY    = 2;
 const INTERVALO_NOTIF_HORAS = 48;
 
-// ⚠️ Solo se usa en la vía WEB (navegador/PWA). En Android nativo no se
-// necesita — el plugin usa el token nativo de Firebase directamente.
+// ⚠️ REEMPLAZA ESTO con tu VAPID key de Firebase Console
 // Firebase Console → tu proyecto → Configuración → Cloud Messaging
 // → Web Push certificates → "Generate key pair" → copiar la clave
 const VAPID_KEY = 'TU_VAPID_KEY_AQUI';
@@ -51,32 +38,6 @@ let deferredPrompt = null;
 let geoInterval  = null;
 let qrVisitaDone = false;
 let qrCanjeDone  = false;
-let nativeNotifGranted = false; // reemplaza a "Notification.permission" cuando es nativo
-
-// =============================================
-//  HELPERS: nativo vs web
-// =============================================
-function esNativo() {
-  return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-}
-
-// Reemplaza cada uso anterior de `Notification.permission === 'granted'`
-function notifPermGranted() {
-  if (esNativo()) return nativeNotifGranted;
-  return typeof Notification !== 'undefined' && Notification.permission === 'granted';
-}
-
-// Muestra una notificación local (proximidad / foreground) de forma segura
-// en los dos entornos.
-function mostrarNotificacionLocal(title, body) {
-  if (!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.ready.then(sw => {
-    sw.showNotification(title, {
-      body, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png',
-      tag: 'dpoyo-local', data: { url: '/' },
-    });
-  }).catch(err => console.warn('No se pudo mostrar notificación local:', err));
-}
 
 // =============================================
 //  INIT
@@ -106,6 +67,7 @@ async function initApp() {
     showScreen('card');
     renderCard();
     startGeo();
+    // Escuchar mensajes en foreground
     setupForegroundMessages();
   } else {
     showScreen('register');
@@ -298,7 +260,7 @@ function checkProximity() {
 }
 
 function tryPushNotif(cycle, left, sucNombre) {
-  if (!notifPermGranted()) return;
+  if (Notification.permission !== 'granted') return;
   const ultima = currentUser?.ultima_notif ? new Date(currentUser.ultima_notif) : null;
   const horasPasadas = ultima ? (Date.now() - ultima.getTime()) / 3600000 : 999;
   if (horasPasadas < INTERVALO_NOTIF_HORAS) return;
@@ -311,7 +273,12 @@ function tryPushNotif(cycle, left, sucNombre) {
     .replace('{V}', left)
     .replace('{S}', left === 1 ? '' : 's');
 
-  mostrarNotificacionLocal("D'Poyo", body);
+  navigator.serviceWorker.ready.then(sw => {
+    sw.showNotification("D'Poyo", {
+      body, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png',
+      tag: 'dpoyo-geo', renotify: false, data: { url: '/' },
+    });
+  });
 
   currentUser.ultima_notif  = new Date().toISOString();
   currentUser.ultimo_msg_idx = idx;
@@ -319,98 +286,79 @@ function tryPushNotif(cycle, left, sucNombre) {
 }
 
 // =============================================
-//  NOTIFICACIONES — universal (nativo Android / web)
+//  NOTIFICACIONES FCM (web + nativo) ← CAMBIO PRINCIPAL
 // =============================================
+function esNativo() {
+  return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+}
+
 window.requestNotif = async function() {
   const btn = document.getElementById('btnNotif');
-
   try {
     if (esNativo()) {
-      // ---- ANDROID NATIVO (Capacitor) ----
-      const { FirebaseMessaging } = window.Capacitor.Plugins;
-
-      const perm = await FirebaseMessaging.requestPermissions();
-      if (perm.receive !== 'granted') {
-        btn.textContent = '🔕 Notificaciones bloqueadas';
-        return;
-      }
-      nativeNotifGranted = true;
-
-      const { token } = await FirebaseMessaging.getToken();
-      if (currentUser?.id && token) {
-        await updateDoc(doc(db, 'clientes', currentUser.id), {
-          fcmToken: token,
-          notif_activa: true,
-        }).catch(console.warn);
-        currentUser.notif_activa = true;
-        currentUser.fcmToken = token;
-        saveLocalUser(currentUser);
-      }
-
-      FirebaseMessaging.addListener('notificationReceived', (event) => {
-        console.log('Push nativa (foreground):', event.notification);
-      });
-      FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
-        console.log('Push nativa tocada:', event.notification);
-      });
-
-      btn.textContent = '✓ Notificaciones activas';
-      btn.classList.add('active');
-      checkProximity();
-      return;
-    }
-
-    // ---- WEB / PWA en navegador ----
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') {
-      btn.textContent = '🔕 Notificaciones bloqueadas';
-      return;
-    }
-    await navigator.serviceWorker.ready;
-    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
-
-    if (token) {
-      if (currentUser?.id) {
-        await updateDoc(doc(db, 'clientes', currentUser.id), {
-          fcmToken: token,
-          notif_activa: true,
-        }).catch(console.warn);
-      }
-      currentUser.notif_activa = true;
-      currentUser.fcmToken = token;
-      saveLocalUser(currentUser);
-      btn.textContent = '✓ Notificaciones activas';
-      btn.classList.add('active');
-      checkProximity();
+      await activarPushNativo();
     } else {
-      btn.textContent = '⚠️ Error al activar';
+      await activarPushWeb();
     }
+    currentUser.notif_activa = true;
+    saveLocalUser(currentUser);
+    btn.textContent = '✓ Notificaciones activas';
+    btn.classList.add('active');
+    checkProximity();
   } catch (err) {
     console.error('Error notificaciones:', err);
-    if (notifPermGranted()) {
-      currentUser.notif_activa = true;
-      saveLocalUser(currentUser);
-      btn.textContent = '✓ Notificaciones activas';
-      btn.classList.add('active');
-      checkProximity();
-    } else {
-      btn.textContent = '⚠️ Error al activar';
-    }
+    btn.textContent = '⚠️ Error al activar';
   }
 };
 
+// NATIVO (Android/iOS empaquetado) — usa el plugin de Capacitor, no getToken() web
+async function activarPushNativo() {
+  const { FirebaseMessaging } = window.Capacitor.Plugins;
+  const perm = await FirebaseMessaging.requestPermissions();
+  if (perm.receive !== 'granted') throw new Error('Permiso denegado');
+  const { token } = await FirebaseMessaging.getToken();
+  await guardarTokenFirestore(token);
+}
+
+// WEB (PWA en navegador) — tu lógica original con VAPID_KEY
+async function activarPushWeb() {
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') throw new Error('Permiso denegado');
+  await navigator.serviceWorker.ready;
+  const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+  if (!token) throw new Error('No se obtuvo FCM token');
+  await guardarTokenFirestore(token);
+}
+
+async function guardarTokenFirestore(token) {
+  currentUser.fcmToken = token;
+  if (currentUser?.id) {
+    await updateDoc(doc(db, 'clientes', currentUser.id), {
+      fcmToken: token,
+      notif_activa: true,
+    });
+  }
+}
+
 // =============================================
-//  MENSAJES EN FOREGROUND (app abierta)
+//  MENSAJES EN FOREGROUND (app abierta) ← NUEVO
 // =============================================
 function setupForegroundMessages() {
-  // En nativo, el propio plugin dispara 'notificationReceived' (ver arriba);
-  // esto es solo para la vía web.
-  if (esNativo()) return;
   try {
     onMessage(messaging, (payload) => {
+      console.log('Mensaje en foreground:', payload);
       const { title, body } = payload.notification || {};
-      if (notifPermGranted() && title) {
-        mostrarNotificacionLocal(title, body || '');
+      // Mostrar como notificación del SW (requiere permiso ya otorgado)
+      if (Notification.permission === 'granted' && title) {
+        navigator.serviceWorker.ready.then(sw => {
+          sw.showNotification(title, {
+            body: body || '',
+            icon: 'icons/icon-192.png',
+            badge: 'icons/icon-192.png',
+            tag: 'dpoyo-fcm',
+            data: payload.data || { url: '/' },
+          });
+        });
       }
     });
   } catch(e) {
